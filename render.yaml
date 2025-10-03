@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: rishabh-vendor-connect-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install --production
+    startCommand: cd backend && npm run start:production
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://rishabh-vendor-connect-frontend.onrender.com
+      - key: STORAGE_TYPE
+        value: local
+      - key: UPLOAD_DIR
+        value: /tmp/uploads
+      - key: PDF_STORAGE_DIR
+        value: /tmp/pdfs
+  - type: web
+    name: rishabh-vendor-connect-frontend
+    env: static
+    plan: free
+    buildCommand: cd frontend && npm ci && npm run build
+    staticPublishPath: frontend/dist
+    pullRequestPreviewsEnabled: true
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        value: https://rishabh-vendor-connect-backend.onrender.com
+      - key: VITE_APP_NAME
+        value: Rishabh Vendor Connect
+      - key: VITE_APP_VERSION
+        value: 1.0.0

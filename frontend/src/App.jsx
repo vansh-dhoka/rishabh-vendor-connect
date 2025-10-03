@@ -77,24 +77,6 @@ function DashboardWrapper() {
   )
 }
 
-function Vendors() {
-  return <div style={{ padding: 24 }}><h3>Vendors</h3><p>List coming soon.</p></div>
-}
-
-function Invoices() {
-  async function openPdf() {
-    const blob = await apiFetchBlob('/invoices/demo/pdf')
-    const url = URL.createObjectURL(blob)
-    window.open(url, '_blank')
-  }
-  return (
-    <div style={{ padding: 24 }}>
-      <h3>Invoices</h3>
-      <p>Try an invoice PDF (requires auth):</p>
-      <button onClick={openPdf}>Open sample PDF</button>
-    </div>
-  )
-}
 
 function App() {
   return (
@@ -117,8 +99,6 @@ function App() {
           <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
           <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
           <Route path="/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
-          <Route path="/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
-          <Route path="/invoices" element={<ProtectedRoute><Invoices /></ProtectedRoute>} />
           <Route path="/users" element={<ProtectedRoute><UserManagement /></ProtectedRoute>} />
         </Routes>
       </BrowserRouter>

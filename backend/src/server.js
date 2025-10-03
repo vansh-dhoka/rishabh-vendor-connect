@@ -62,14 +62,23 @@ app.use('/api/properties', requireAuth, propertiesRouter)
 app.use('/api/rfqs', requireAuth, rfqsRouter)
 app.use('/api/monitoring', requireAuth, monitoringRouter)
 
-// Enhanced health check endpoint
-app.get('/health', async (_req, res) => {
+// Simple health check endpoint (for Render health checks)
+app.get('/health', (_req, res) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  })
+})
+
+// Enhanced health check endpoint with database status
+app.get('/health/detailed', async (_req, res) => {
   try {
     const health = await getHealthStatus()
     const statusCode = health.status === 'ok' ? 200 : 503
     res.status(statusCode).json(health)
   } catch (error) {
-    logError(error, { endpoint: '/health' })
+    logError(error, { endpoint: '/health/detailed' })
     res.status(500).json({ 
       status: 'error', 
       message: 'Health check failed',
@@ -123,9 +132,12 @@ app.use((req, res) => {
 const port = process.env.PORT || 4000
 app.listen(port, () => {
   // eslint-disable-next-line no-console
-  console.log(`API listening on http://localhost:${port}`)
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`)
-  console.log(`Health check: http://localhost:${port}/health`)
+  console.log(`🚀 Rishabh Vendor Connect API started successfully!`)
+  console.log(`📡 API listening on port ${port}`)
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
+  console.log(`❤️  Health check: http://localhost:${port}/health`)
+  console.log(`📊 Detailed health: http://localhost:${port}/health/detailed`)
+  console.log(`🔗 Database URL configured: ${process.env.DATABASE_URL ? 'Yes' : 'No'}`)
 })
 
 export default app

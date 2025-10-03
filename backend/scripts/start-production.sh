@@ -72,4 +72,9 @@ echo "Note: Files in /tmp will be lost on service restart/deploy"
 
 # Start the application
 echo "Starting application server..."
+echo "Current working directory: $(pwd)"
+echo "Node.js version: $(node --version)"
+echo "Starting server with: node src/server.js"
+
+# Start the server with error handling
 exec node src/server.js

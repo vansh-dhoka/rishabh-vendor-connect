@@ -5,7 +5,10 @@ dotenv.config()
 
 const databaseUrl = process.env.DATABASE_URL
 
-export const pool = new Pool({ connectionString: databaseUrl })
+export const pool = new Pool({ 
+  connectionString: databaseUrl,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+})
 
 export async function verifyDatabaseConnection() {
   const client = await pool.connect()

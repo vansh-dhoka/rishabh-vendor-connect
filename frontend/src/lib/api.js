@@ -1,5 +1,13 @@
 const API_BASE = import.meta.env.VITE_API_URL || '/api'
 
+// Debug: Log the environment variables
+console.log('Environment variables:', {
+  VITE_API_URL: import.meta.env.VITE_API_URL,
+  NODE_ENV: import.meta.env.NODE_ENV,
+  MODE: import.meta.env.MODE
+})
+console.log('Final API_BASE:', API_BASE)
+
 function getToken() {
   return localStorage.getItem('token')
 }

@@ -3,7 +3,7 @@ services:
     name: rishabh-vendor-connect-backend
     env: node
     plan: starter
-    buildCommand: npm ci --only=production
+    buildCommand: npm install --production
     startCommand: npm run start:production
     healthCheckPath: /health
     autoDeploy: true

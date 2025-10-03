@@ -1,4 +1,6 @@
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+// For production deployment, use the full backend URL
+const API_BASE = import.meta.env.VITE_API_URL || 
+  (import.meta.env.MODE === 'production' ? 'https://rishabh-vendor-connect.onrender.com/api' : '/api')
 
 // Debug: Log the environment variables
 console.log('Environment variables:', {

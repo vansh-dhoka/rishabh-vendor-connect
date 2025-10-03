@@ -1,21 +1,32 @@
 // For production deployment, use the full backend URL
-// Check if we're in production mode and force the correct API URL
-const isProduction = import.meta.env.MODE === 'production' || 
-                     import.meta.env.NODE_ENV === 'production' ||
-                     window.location.hostname.includes('onrender.com')
-
-const API_BASE = import.meta.env.VITE_API_URL || 
-  (isProduction ? 'https://rishabh-vendor-connect.onrender.com/api' : '/api')
+// Force the correct API URL for onrender.com deployments
+const API_BASE = (() => {
+  // If environment variable is set, use it
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL
+  }
+  
+  // If we're on onrender.com, force the backend URL
+  if (window.location.hostname.includes('onrender.com')) {
+    return 'https://rishabh-vendor-connect.onrender.com/api'
+  }
+  
+  // Default to local proxy for development
+  return '/api'
+})()
 
 // Debug: Log the environment variables
+console.log('=== API CONFIGURATION DEBUG ===')
 console.log('Environment variables:', {
   VITE_API_URL: import.meta.env.VITE_API_URL,
   NODE_ENV: import.meta.env.NODE_ENV,
   MODE: import.meta.env.MODE,
   hostname: window.location.hostname,
-  isProduction: isProduction
+  isOnRender: window.location.hostname.includes('onrender.com')
 })
 console.log('Final API_BASE:', API_BASE)
+console.log('Current URL:', window.location.href)
+console.log('================================')
 
 function getToken() {
   return localStorage.getItem('token')

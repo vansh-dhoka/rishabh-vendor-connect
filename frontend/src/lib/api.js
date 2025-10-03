@@ -1,12 +1,19 @@
 // For production deployment, use the full backend URL
+// Check if we're in production mode and force the correct API URL
+const isProduction = import.meta.env.MODE === 'production' || 
+                     import.meta.env.NODE_ENV === 'production' ||
+                     window.location.hostname.includes('onrender.com')
+
 const API_BASE = import.meta.env.VITE_API_URL || 
-  (import.meta.env.MODE === 'production' ? 'https://rishabh-vendor-connect.onrender.com/api' : '/api')
+  (isProduction ? 'https://rishabh-vendor-connect.onrender.com/api' : '/api')
 
 // Debug: Log the environment variables
 console.log('Environment variables:', {
   VITE_API_URL: import.meta.env.VITE_API_URL,
   NODE_ENV: import.meta.env.NODE_ENV,
-  MODE: import.meta.env.MODE
+  MODE: import.meta.env.MODE,
+  hostname: window.location.hostname,
+  isProduction: isProduction
 })
 console.log('Final API_BASE:', API_BASE)
 

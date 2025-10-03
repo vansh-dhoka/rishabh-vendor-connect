@@ -32,7 +32,7 @@ services:
     autoDeploy: true
     envVars:
       - key: VITE_API_URL
-        value: https://rishabh-vendor-connect-backend.onrender.com
+        value: https://rishabh-vendor-connect.onrender.com/api
       - key: VITE_APP_NAME
         value: Rishabh Vendor Connect
       - key: VITE_APP_VERSION

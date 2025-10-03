@@ -24,9 +24,20 @@ until pg_isready -d "$DATABASE_URL" > /dev/null 2>&1; do
 done
 echo "Database is ready!"
 
-# Run database migrations
+# Resolve absolute paths for migration files
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+BACKEND_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
+SCHEMA_FILE="$BACKEND_ROOT/db/schema.sql"
+SEED_FILE="$BACKEND_ROOT/db/seed.sql"
+
+# Run database migrations (absolute path to avoid CWD issues)
 echo "Running database migrations..."
-npm run migrate
+if [ ! -f "$SCHEMA_FILE" ]; then
+  echo "ERROR: Schema file not found at $SCHEMA_FILE"
+  exit 1
+fi
+
+psql "$DATABASE_URL" -f "$SCHEMA_FILE"
 
 # Check if migrations were successful
 if [ $? -eq 0 ]; then
@@ -36,9 +47,11 @@ else
     exit 1
 fi
 
-# Optional: Run database seeding (uncomment if needed)
-# echo "Seeding database with initial data..."
-# npm run seed
+# Optional: Run database seeding (uncomment to enable)
+# if [ -f "$SEED_FILE" ]; then
+#   echo "Seeding database with initial data..."
+#   psql "$DATABASE_URL" -f "$SEED_FILE"
+# fi
 
 # Create ephemeral storage directories (resets on restart)
 echo "Creating ephemeral storage directories..."

@@ -9,17 +9,30 @@ const router = Router()
 // List POs
 router.get('/', enforceCompanyScope, async (req, res) => {
   const companyId = req.query.company_id || null
+  const status = req.query.status || null
   const limit = Math.min(Number(req.query.limit || 50), 200)
   const offset = Number(req.query.offset || 0)
-  let rows
+  
+  let query = 'select * from purchase_orders where 1=1'
+  let params = []
+  let paramCount = 0
+  
   if (companyId) {
-    ({ rows } = await pool.query(
-      'select * from purchase_orders where company_id = $1 order by created_at desc limit $2 offset $3',
-      [companyId, limit, offset]
-    ))
-  } else {
-    ({ rows } = await pool.query('select * from purchase_orders order by created_at desc limit $1 offset $2', [limit, offset]))
+    paramCount++
+    query += ` and company_id = $${paramCount}`
+    params.push(companyId)
   }
+  
+  if (status) {
+    paramCount++
+    query += ` and status = $${paramCount}`
+    params.push(status)
+  }
+  
+  query += ` order by created_at desc limit $${paramCount + 1} offset $${paramCount + 2}`
+  params.push(limit, offset)
+  
+  const { rows } = await pool.query(query, params)
   res.json({ items: rows, limit, offset })
 })
 

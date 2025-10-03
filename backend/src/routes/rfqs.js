@@ -8,22 +8,34 @@ const router = Router()
 router.get('/', enforceCompanyScope, async (req, res) => {
   const companyId = req.query.company_id || null
   const projectId = req.query.project_id || null
+  const status = req.query.status || null
   const limit = Math.min(Number(req.query.limit || 50), 200)
   const offset = Number(req.query.offset || 0)
-  let rows
+  
+  let query = 'select * from quotation_requests where 1=1'
+  let params = []
+  let paramCount = 0
+  
   if (projectId) {
-    ({ rows } = await pool.query(
-      'select * from quotation_requests where project_id = $1 order by created_at desc limit $2 offset $3',
-      [projectId, limit, offset]
-    ))
+    paramCount++
+    query += ` and project_id = $${paramCount}`
+    params.push(projectId)
   } else if (companyId) {
-    ({ rows } = await pool.query(
-      'select * from quotation_requests where company_id = $1 order by created_at desc limit $2 offset $3',
-      [companyId, limit, offset]
-    ))
-  } else {
-    ({ rows } = await pool.query('select * from quotation_requests order by created_at desc limit $1 offset $2', [limit, offset]))
+    paramCount++
+    query += ` and company_id = $${paramCount}`
+    params.push(companyId)
   }
+  
+  if (status) {
+    paramCount++
+    query += ` and status = $${paramCount}`
+    params.push(status)
+  }
+  
+  query += ` order by created_at desc limit $${paramCount + 1} offset $${paramCount + 2}`
+  params.push(limit, offset)
+  
+  const { rows } = await pool.query(query, params)
   res.json({ items: rows, limit, offset })
 })
 

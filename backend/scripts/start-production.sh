@@ -24,16 +24,19 @@ until pg_isready -d "$DATABASE_URL" > /dev/null 2>&1; do
 done
 echo "Database is ready!"
 
-# Resolve absolute paths for migration files
-SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-BACKEND_ROOT=$(cd "$SCRIPT_DIR/.." && pwd)
-SCHEMA_FILE="$BACKEND_ROOT/db/schema.sql"
-SEED_FILE="$BACKEND_ROOT/db/seed.sql"
-
-# Run database migrations (absolute path to avoid CWD issues)
+# Run database migrations
 echo "Running database migrations..."
+SCHEMA_FILE="db/schema.sql"
+SEED_FILE="db/seed.sql"
+
+# Check if schema file exists
 if [ ! -f "$SCHEMA_FILE" ]; then
   echo "ERROR: Schema file not found at $SCHEMA_FILE"
+  echo "Current directory: $(pwd)"
+  echo "Files in current directory:"
+  ls -la
+  echo "Files in db directory:"
+  ls -la db/ 2>/dev/null || echo "db directory not found"
   exit 1
 fi
 

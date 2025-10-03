@@ -109,6 +109,35 @@ app.get('/api/stats/metrics', requireAuth, async (_req, res) => {
   }
 })
 
+// Database seeding endpoint (for development/testing)
+app.post('/api/admin/seed', requireAuth, async (req, res) => {
+  try {
+    // Only allow super admin to seed database
+    if (req.user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Insufficient permissions' })
+    }
+
+    const { pool } = await import('./db.js')
+    
+    // Read and execute seed file
+    const fs = await import('fs')
+    const path = await import('path')
+    const seedFile = path.join(process.cwd(), 'db', 'seed.sql')
+    
+    if (!fs.existsSync(seedFile)) {
+      return res.status(404).json({ error: 'Seed file not found' })
+    }
+    
+    const seedSQL = fs.readFileSync(seedFile, 'utf8')
+    await pool.query(seedSQL)
+    
+    res.json({ message: 'Database seeded successfully' })
+  } catch (error) {
+    logError(error, { endpoint: '/api/admin/seed' })
+    res.status(500).json({ error: 'Failed to seed database' })
+  }
+})
+
 // Global error handler
 app.use((error, req, res, next) => {
   logError(error, { 

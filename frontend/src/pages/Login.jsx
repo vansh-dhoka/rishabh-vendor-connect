@@ -64,7 +64,8 @@ export default function Login() {
       await login(email, password)
       navigate('/')
     } catch (e) {
-      setError('Login failed. Please check your credentials and try again.')
+      console.error('Login error:', e)
+      setError(`Login failed: ${e.message || 'Please check your credentials and try again.'}`)
     } finally {
       setLoading(false)
     }

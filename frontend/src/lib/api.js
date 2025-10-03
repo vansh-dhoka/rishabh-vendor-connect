@@ -17,10 +17,14 @@ export async function apiFetch(path, options = {}) {
 }
 
 export async function login(email, password) {
+  console.log('Login attempt with API_BASE:', API_BASE)
+  console.log('Full URL:', `${API_BASE}/auth/login`)
+  
   const res = await apiFetch('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ email, password })
   })
+  console.log('Login response:', res)
   if (res?.token) localStorage.setItem('token', res.token)
   return res
 }

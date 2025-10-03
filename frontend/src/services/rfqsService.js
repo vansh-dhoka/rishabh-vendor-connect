@@ -43,14 +43,7 @@ export async function approveRfq(rfqId, payload) {
   return data
 }
 
-import api from './apiClient'
-
 export async function fetchRfqs() {
   const { data } = await api.get('/rfqs')
-  return data
-}
-
-export async function createRfq(payload) {
-  const { data } = await api.post('/rfqs', payload)
   return data
 }

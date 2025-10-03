@@ -1,0 +1,39 @@
+services:
+  - type: web
+    name: rishabh-vendor-connect-backend
+    env: node
+    plan: starter
+    buildCommand: npm ci --only=production
+    startCommand: npm run start:production
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        value: https://rishabh-vendor-connect-frontend.onrender.com
+      - key: STORAGE_TYPE
+        value: local
+      - key: UPLOAD_DIR
+        value: uploads
+      - key: PDF_STORAGE_DIR
+        value: pdfs
+    disk:
+      name: rishabh-vendor-connect-storage
+      mountPath: /opt/render/project/src/storage
+      sizeGB: 1
+    database:
+      name: rishabh-vendor-connect-db
+      plan: free
+      databaseName: rishabh_vendor_connect
+      user: rishabh_user
+
+databases:
+  - name: rishabh-vendor-connect-db
+    plan: free
+    databaseName: rishabh_vendor_connect
+    user: rishabh_user

@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: rishabh-vendor-connect-frontend
+    env: static
+    plan: free
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    pullRequestPreviewsEnabled: true
+    autoDeploy: true
+    envVars:
+      - key: VITE_API_URL
+        value: https://rishabh-vendor-connect-backend.onrender.com
+      - key: VITE_APP_NAME
+        value: Rishabh Vendor Connect
+      - key: VITE_APP_VERSION
+        value: 1.0.0

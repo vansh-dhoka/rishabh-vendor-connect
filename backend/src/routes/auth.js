@@ -32,7 +32,7 @@ const users = [
     id: 'company_admin_1', 
     email: 'admin@rishabhdevelopers.com', 
     passwordHash: bcrypt.hashSync('CompanyAdmin@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.COMPANY_ADMIN,
     name: 'Rishabh Developers Admin',
     isActive: true
@@ -41,7 +41,7 @@ const users = [
     id: 'company_admin_2', 
     email: 'admin@premiumestates.com', 
     passwordHash: bcrypt.hashSync('CompanyAdmin@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.COMPANY_ADMIN,
     name: 'Premium Estates Admin',
     isActive: true
@@ -52,7 +52,7 @@ const users = [
     id: 'project_manager_1', 
     email: 'pm@rishabhdevelopers.com', 
     passwordHash: bcrypt.hashSync('ProjectManager@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.PROJECT_MANAGER,
     name: 'John Smith - Project Manager',
     isActive: true
@@ -61,7 +61,7 @@ const users = [
     id: 'project_manager_2', 
     email: 'pm@premiumestates.com', 
     passwordHash: bcrypt.hashSync('ProjectManager@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.PROJECT_MANAGER,
     name: 'Sarah Johnson - Project Manager',
     isActive: true
@@ -72,7 +72,7 @@ const users = [
     id: 'finance_manager_1', 
     email: 'finance@rishabhdevelopers.com', 
     passwordHash: bcrypt.hashSync('FinanceManager@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.FINANCE_MANAGER,
     name: 'Mike Chen - Finance Manager',
     isActive: true
@@ -81,7 +81,7 @@ const users = [
     id: 'finance_manager_2', 
     email: 'finance@premiumestates.com', 
     passwordHash: bcrypt.hashSync('FinanceManager@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.FINANCE_MANAGER,
     name: 'Lisa Wang - Finance Manager',
     isActive: true
@@ -92,7 +92,7 @@ const users = [
     id: 'vendor_1', 
     email: 'vendor@steelconstruction.com', 
     passwordHash: bcrypt.hashSync('Vendor@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.VENDOR,
     name: 'Steel Construction Co.',
     isActive: true
@@ -101,7 +101,7 @@ const users = [
     id: 'vendor_2', 
     email: 'vendor@electricalworks.com', 
     passwordHash: bcrypt.hashSync('Vendor@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.VENDOR,
     name: 'Electrical Works Ltd.',
     isActive: true
@@ -110,7 +110,7 @@ const users = [
     id: 'vendor_3', 
     email: 'vendor@plumbingpro.com', 
     passwordHash: bcrypt.hashSync('Vendor@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.VENDOR,
     name: 'Plumbing Pro Services',
     isActive: true
@@ -121,7 +121,7 @@ const users = [
     id: 'viewer_1', 
     email: 'viewer@rishabhdevelopers.com', 
     passwordHash: bcrypt.hashSync('Viewer@123', 10), 
-    companyId: '550e8400-e29b-41d4-a716-446655440000',
+    companyId: '0bfa0b4e-6f4f-4829-9e1e-b86219a0ab28',
     role: USER_ROLES.VIEWER,
     name: 'Audit Viewer',
     isActive: true

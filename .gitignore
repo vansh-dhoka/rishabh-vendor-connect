@@ -188,6 +188,9 @@ storage/
 # Backup files
 *.backup
 *.bak
+# Exclude schema and seed files from backup ignore
+!backend/db/schema.sql
+!backend/db/seed.sql
 *.sql
 
 # Local development files

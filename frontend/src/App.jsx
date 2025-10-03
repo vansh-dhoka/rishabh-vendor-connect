@@ -30,41 +30,54 @@ function ProtectedRoute({ children }) {
 function DashboardWrapper() {
   const { logout, user } = useAuth()
   return (
-    <div>
-      <div style={{ padding: '12px 24px', backgroundColor: '#f8f9fa', borderBottom: '1px solid #dee2e6' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+    <div className="app-container">
+      <div className="nav-container">
+        <div className="nav-content">
+          <div className="nav-brand">
             <img 
               src="/assets/logo.jpeg" 
               alt="Rishabh Vendor Connect" 
-              style={{ height: 40, width: 'auto', backgroundColor: 'white', borderRadius: 4 }}
+              className="logo"
+              onError={(e) => {
+                e.target.style.display = 'none'
+                e.target.nextSibling.style.display = 'flex'
+              }}
             />
+            <div style={{ 
+              display: 'none',
+              width: '2.5rem',
+              height: '2.5rem',
+              backgroundColor: 'var(--primary-100)',
+              borderRadius: 'var(--radius-md)',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '1.25rem'
+            }}>
+              🏢
+            </div>
             <div>
-              <h1 style={{ margin: 0, color: '#495057' }}>Rishabh Vendor Connect</h1>
+              <div className="nav-title">Rishabh Vendor Connect</div>
               {user && (
-                <div style={{ fontSize: 12, color: '#6c757d', marginTop: 2 }}>
+                <div className="nav-subtitle">
                   Welcome, {user.name} ({user.role.replace('_', ' ').toUpperCase()})
                 </div>
               )}
             </div>
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          
+          <div className="nav-user-info">
             {user && (
-              <div style={{ fontSize: 12, color: '#6c757d', textAlign: 'right' }}>
-                <div>{user.email}</div>
-                <div>Company: {user.companyId || 'All Companies'}</div>
+              <div className="nav-user-details">
+                <div className="nav-user-name">{user.name}</div>
+                <div className="nav-user-email">{user.email}</div>
+                <div className="nav-user-company">
+                  Company: {user.companyId || 'All Companies'}
+                </div>
               </div>
             )}
             <button 
               onClick={logout}
-              style={{ 
-                padding: '8px 16px', 
-                backgroundColor: '#dc3545', 
-                color: 'white', 
-                border: 'none', 
-                borderRadius: 4,
-                cursor: 'pointer'
-              }}
+              className="btn btn-danger btn-sm"
             >
               Logout
             </button>
@@ -72,7 +85,10 @@ function DashboardWrapper() {
         </div>
         <NavBar />
       </div>
-      <Dashboard />
+      
+      <div className="main-content">
+        <Dashboard />
+      </div>
     </div>
   )
 }

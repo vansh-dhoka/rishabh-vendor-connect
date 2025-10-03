@@ -1,36 +1,72 @@
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
 
 export default function NavBar() {
+  const location = useLocation()
+  
+  const navItems = [
+    { path: '/', label: 'Dashboard', icon: '📊' },
+    { path: '/properties', label: 'Properties', icon: '🏢' },
+    { path: '/rfqs', label: 'RFQs', icon: '📋' },
+    { path: '/companies', label: 'Companies', icon: '🏭' },
+    { path: '/projects', label: 'Projects', icon: '🚧' },
+    { path: '/vendors', label: 'Vendors', icon: '🤝' },
+    { path: '/items', label: 'Items', icon: '📦' },
+    { path: '/pos', label: 'POs', icon: '📄' },
+    { path: '/invoices', label: 'Invoices', icon: '💰' },
+    { path: '/users', label: 'Users', icon: '👥' }
+  ]
+
   return (
     <nav style={{ 
-      display: 'flex', 
-      alignItems: 'center',
-      gap: 24, 
-      padding: 16, 
-      borderBottom: '1px solid #eee',
-      backgroundColor: '#f8f9fa'
+      padding: '0 var(--space-6)',
+      borderBottom: '1px solid var(--gray-200)',
+      backgroundColor: 'white'
     }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <img 
-          src="/assets/logo.jpeg" 
-          alt="Rishabh Vendor Connect" 
-          style={{ height: 40, width: 'auto', backgroundColor: 'white', borderRadius: 4 }}
-        />
-        <span style={{ fontSize: 20, fontWeight: 'bold', color: '#2c3e50' }}>
-          Rishabh Vendor Connect
-        </span>
-      </div>
-      <div style={{ display: 'flex', gap: 16, marginLeft: 'auto' }}>
-        <Link to="/" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Dashboard</Link>
-        <Link to="/properties" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Properties</Link>
-        <Link to="/rfqs" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>RFQs</Link>
-        <Link to="/companies" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Companies</Link>
-        <Link to="/projects" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Projects</Link>
-        <Link to="/vendors" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Vendors</Link>
-        <Link to="/items" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Items</Link>
-        <Link to="/pos" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>POs</Link>
-        <Link to="/invoices" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Invoices</Link>
-        <Link to="/users" style={{ textDecoration: 'none', color: '#2c3e50', fontWeight: 500 }}>Users</Link>
+      <div style={{ 
+        display: 'flex', 
+        alignItems: 'center',
+        gap: 'var(--space-8)',
+        maxWidth: '1280px',
+        margin: '0 auto'
+      }}>
+        {navItems.map((item) => {
+          const isActive = location.pathname === item.path
+          return (
+            <Link
+              key={item.path}
+              to={item.path}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 'var(--space-2)',
+                padding: 'var(--space-3) var(--space-4)',
+                textDecoration: 'none',
+                color: isActive ? 'var(--primary-600)' : 'var(--gray-600)',
+                fontWeight: isActive ? '600' : '500',
+                fontSize: 'var(--font-size-sm)',
+                borderRadius: 'var(--radius-md)',
+                transition: 'all 0.2s ease',
+                backgroundColor: isActive ? 'var(--primary-50)' : 'transparent',
+                borderBottom: isActive ? '2px solid var(--primary-600)' : '2px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                if (!isActive) {
+                  e.target.style.color = 'var(--primary-600)'
+                  e.target.style.backgroundColor = 'var(--primary-50)'
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isActive) {
+                  e.target.style.color = 'var(--gray-600)'
+                  e.target.style.backgroundColor = 'transparent'
+                }
+              }}
+            >
+              <span style={{ fontSize: 'var(--font-size-sm)' }}>{item.icon}</span>
+              {item.label}
+            </Link>
+          )
+        })}
       </div>
     </nav>
   )

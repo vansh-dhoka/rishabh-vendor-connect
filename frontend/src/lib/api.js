@@ -1,18 +1,22 @@
 // For production deployment, use the full backend URL
 // Force the correct API URL for onrender.com deployments
 const API_BASE = (() => {
-  // If environment variable is set, use it
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL
-  }
+  let baseUrl = import.meta.env.VITE_API_URL
   
-  // If we're on onrender.com, force the backend URL
+  // If we're on onrender.com, ensure we have the correct backend URL
   if (window.location.hostname.includes('onrender.com')) {
-    return 'https://rishabh-vendor-connect.onrender.com/api'
+    if (!baseUrl || !baseUrl.includes('rishabh-vendor-connect.onrender.com')) {
+      baseUrl = 'https://rishabh-vendor-connect.onrender.com'
+    }
   }
   
-  // Default to local proxy for development
-  return '/api'
+  // Ensure the URL ends with /api
+  if (baseUrl && !baseUrl.endsWith('/api')) {
+    baseUrl = baseUrl + '/api'
+  }
+  
+  // If no base URL, use local proxy for development
+  return baseUrl || '/api'
 })()
 
 // Debug: Log the environment variables

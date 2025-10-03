@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 export function createStructuredPdfPath(companyId, projectId, documentType, documentId) {
-  const baseDir = process.env.PDF_STORAGE_DIR || 'pdfs'
+  const baseDir = process.env.PDF_STORAGE_DIR || '/tmp/pdfs'
   const pdfPath = path.join(baseDir, companyId, projectId || 'general', `${documentType}_${documentId}.pdf`)
   
   // Ensure directory exists

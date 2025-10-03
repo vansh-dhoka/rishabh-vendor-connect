@@ -103,12 +103,17 @@ User: rishabh_user
 Auto Backups: enabled
 ```
 
-### Storage (Persistent Disk)
+### Storage (Ephemeral - Free Plan)
 ```yaml
-Name: rishabh-vendor-connect-storage
-Mount Path: /opt/render/project/src/storage
-Size: 1GB
+# Note: Persistent storage not available on free plan
+# Using ephemeral storage in /tmp (resets on restart)
+UPLOAD_DIR=/tmp/uploads
+PDF_STORAGE_DIR=/tmp/pdfs
 ```
+
+**For production with persistent storage:**
+- Upgrade to Render Starter plan (~$7/month)
+- Or implement S3/GCS external storage
 
 ---
 

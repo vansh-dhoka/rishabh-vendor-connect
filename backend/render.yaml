@@ -19,13 +19,11 @@ services:
       - key: STORAGE_TYPE
         value: local
       - key: UPLOAD_DIR
-        value: uploads
+        value: /tmp/uploads
       - key: PDF_STORAGE_DIR
-        value: pdfs
-    disk:
-      name: rishabh-vendor-connect-storage
-      mountPath: /opt/render/project/src/storage
-      sizeGB: 1
+        value: /tmp/pdfs
+    # Note: Persistent storage not available on free plan
+    # Using ephemeral storage in /tmp for file uploads
     database:
       name: rishabh-vendor-connect-db
       plan: free

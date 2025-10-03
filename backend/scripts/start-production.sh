@@ -40,19 +40,19 @@ fi
 # echo "Seeding database with initial data..."
 # npm run seed
 
-# Create necessary directories
-echo "Creating storage directories..."
-mkdir -p /opt/render/project/src/storage/uploads
-mkdir -p /opt/render/project/src/storage/pdfs
-mkdir -p /opt/render/project/src/storage/backups
+# Create ephemeral storage directories (resets on restart)
+echo "Creating ephemeral storage directories..."
+mkdir -p /tmp/uploads
+mkdir -p /tmp/pdfs
+mkdir -p /tmp/backups
 
 # Set proper permissions
-chmod 755 /opt/render/project/src/storage
-chmod 755 /opt/render/project/src/storage/uploads
-chmod 755 /opt/render/project/src/storage/pdfs
-chmod 755 /opt/render/project/src/storage/backups
+chmod 755 /tmp/uploads
+chmod 755 /tmp/pdfs
+chmod 755 /tmp/backups
 
-echo "Storage directories created and configured"
+echo "Ephemeral storage directories created and configured"
+echo "Note: Files in /tmp will be lost on service restart/deploy"
 
 # Start the application
 echo "Starting application server..."

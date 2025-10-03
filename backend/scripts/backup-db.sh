@@ -5,8 +5,8 @@
 
 set -e
 
-# Configuration
-BACKUP_DIR="/opt/render/project/src/storage/backups"
+# Configuration - Using ephemeral storage (resets on restart)
+BACKUP_DIR="/tmp/backups"
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_FILE="rishabh_vendor_connect_backup_${DATE}.sql"
 RETENTION_DAYS=30

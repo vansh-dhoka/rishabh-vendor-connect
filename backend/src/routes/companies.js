@@ -3,10 +3,11 @@ import { pool } from '../db.js'
 import { enforceCompanyScope } from '../middleware/auth.js'
 import { withTransaction, softDeleteWithCompanyScope } from '../utils/transactions.js'
 import { getAuditInfo } from '../utils/audit.js'
+import { asyncHandler, ValidationError, handleDatabaseError } from '../utils/errorHandler.js'
 
 const router = Router()
 
-router.get('/', enforceCompanyScope, async (req, res) => {
+router.get('/', enforceCompanyScope, asyncHandler(async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 50), 200)
   const offset = Number(req.query.offset || 0)
   
@@ -21,11 +22,15 @@ router.get('/', enforceCompanyScope, async (req, res) => {
     params = [limit, offset]
   }
   
-  const { rows } = await pool.query(query, params)
-  res.json({ items: rows, limit, offset })
-})
+  try {
+    const { rows } = await pool.query(query, params)
+    res.json({ items: rows, limit, offset })
+  } catch (error) {
+    handleDatabaseError(error, 'fetching companies')
+  }
+}))
 
-router.post('/', async (req, res) => {
+router.post('/', asyncHandler(async (req, res) => {
   const {
     name,
     gstin,
@@ -38,17 +43,21 @@ router.post('/', async (req, res) => {
   } = req.body || {}
 
   if (!name || String(name).trim().length === 0) {
-    return res.status(400).json({ error: 'name_required' })
+    throw new ValidationError('Company name is required', 'name', name)
   }
 
-  const { rows } = await pool.query(
-    `insert into companies (name, gstin, address_line1, address_line2, city, state, postal_code, country)
-     values ($1,$2,$3,$4,$5,$6,$7,$8)
-     returning *`,
-    [name, gstin || null, address_line1 || null, address_line2 || null, city || null, state || null, postal_code || null, country || 'IN']
-  )
-  res.status(201).json(rows[0])
-})
+  try {
+    const { rows } = await pool.query(
+      `insert into companies (name, gstin, address_line1, address_line2, city, state, postal_code, country)
+       values ($1,$2,$3,$4,$5,$6,$7,$8)
+       returning *`,
+      [name, gstin || null, address_line1 || null, address_line2 || null, city || null, state || null, postal_code || null, country || 'IN']
+    )
+    res.status(201).json(rows[0])
+  } catch (error) {
+    handleDatabaseError(error, 'creating company')
+  }
+}))
 
 router.get('/:id', enforceCompanyScope, async (req, res) => {
   const { rows } = await pool.query('select * from companies where id = $1 and id = $2 and is_deleted = false', [req.params.id, req.scope.company_id])

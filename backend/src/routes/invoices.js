@@ -8,6 +8,7 @@ import { enforceCompanyScope } from '../middleware/auth.js'
 import { validateFileType, validateFileSize } from '../middleware/validation.js'
 import { withTransaction } from '../utils/transactions.js'
 import { getAuditInfo, logAuditEvent } from '../utils/audit.js'
+import { asyncHandler, ValidationError, handleDatabaseError } from '../utils/errorHandler.js'
 
 const router = Router()
 
@@ -147,35 +148,48 @@ router.post('/:id/upload', enforceCompanyScope, upload.single('invoice'), async 
 })
 
 // Update invoice status
-router.patch('/:id/status', enforceCompanyScope, async (req, res) => {
+router.patch('/:id/status', enforceCompanyScope, asyncHandler(async (req, res) => {
   const id = req.params.id
   const { status } = req.body || {}
   const allowed = ['draft','submitted','approved','paid','rejected','cancelled']
-  if (!allowed.includes(status)) return res.status(400).json({ error: 'invalid_status' })
   
-  // Get current invoice and PO status
-  const invoice = await pool.query(
-    'select i.*, po.status as po_status from invoices i left join purchase_orders po on i.po_id = po.id where i.id = $1 and i.company_id = $2',
-    [id, req.scope.company_id]
-  )
-  if (invoice.rows.length === 0) return res.status(404).json({ error: 'not_found' })
-  
-  // Validate PO is approved before invoice approval
-  if (status === 'approved' && invoice.rows[0].po_id && invoice.rows[0].po_status !== 'approved') {
-    return res.status(400).json({ 
-      error: 'po_not_approved', 
-      message: 'Cannot approve invoice for unapproved PO' 
-    })
+  if (!allowed.includes(status)) {
+    throw new ValidationError(`Invalid status. Allowed values: ${allowed.join(', ')}`, 'status', status)
   }
   
-  const { rows } = await pool.query(
-    'update invoices set status = $2, updated_at = now() where id = $1 and company_id = $3 returning *',
-    [id, status, req.scope.company_id]
-  )
-  
-  if (rows.length === 0) return res.status(404).json({ error: 'not_found' })
-  res.json(rows[0])
-})
+  try {
+    // Get current invoice and PO status
+    const invoice = await pool.query(
+      'select i.*, po.status as po_status from invoices i left join purchase_orders po on i.po_id = po.id where i.id = $1 and i.company_id = $2',
+      [id, req.scope.company_id]
+    )
+    
+    if (invoice.rows.length === 0) {
+      throw new ValidationError('Invoice not found', 'invoice_id', id)
+    }
+    
+    // Validate PO is approved before invoice approval
+    if (status === 'approved' && invoice.rows[0].po_id && invoice.rows[0].po_status !== 'approved') {
+      throw new ValidationError('Cannot approve invoice for unapproved PO', 'po_status', invoice.rows[0].po_status)
+    }
+    
+    const { rows } = await pool.query(
+      'update invoices set status = $2, updated_at = now() where id = $1 and company_id = $3 returning *',
+      [id, status, req.scope.company_id]
+    )
+    
+    if (rows.length === 0) {
+      throw new ValidationError('Invoice not found or update failed', 'invoice_id', id)
+    }
+    
+    res.json({
+      ...rows[0],
+      message: `Invoice status updated to ${status} successfully`
+    })
+  } catch (error) {
+    handleDatabaseError(error, 'updating invoice status')
+  }
+}))
 
 // Generate and download invoice PDF
 router.get('/:id/pdf', async (req, res) => {

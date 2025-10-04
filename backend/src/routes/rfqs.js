@@ -1,11 +1,12 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
 import { enforceCompanyScope } from '../middleware/auth.js'
+import { asyncHandler, ValidationError, handleDatabaseError } from '../utils/errorHandler.js'
 
 const router = Router()
 
 // List RFQs
-router.get('/', enforceCompanyScope, async (req, res) => {
+router.get('/', enforceCompanyScope, asyncHandler(async (req, res) => {
   const companyId = req.query.company_id || null
   const projectId = req.query.project_id || null
   const status = req.query.status || null
@@ -35,17 +36,27 @@ router.get('/', enforceCompanyScope, async (req, res) => {
   query += ` order by created_at desc limit $${paramCount + 1} offset $${paramCount + 2}`
   params.push(limit, offset)
   
-  const { rows } = await pool.query(query, params)
-  res.json({ items: rows, limit, offset })
-})
+  try {
+    const { rows } = await pool.query(query, params)
+    res.json({ items: rows, limit, offset })
+  } catch (error) {
+    handleDatabaseError(error, 'fetching RFQs')
+  }
+}))
 
 // Create RFQ with items
-router.post('/', enforceCompanyScope, async (req, res) => {
+router.post('/', enforceCompanyScope, asyncHandler(async (req, res) => {
   const client = await pool.connect()
   try {
     const { company_id, project_id, title, description, due_date, items } = req.body || {}
-    if (!company_id) return res.status(400).json({ error: 'company_id_required' })
-    if (!title || String(title).trim().length === 0) return res.status(400).json({ error: 'title_required' })
+    
+    if (!company_id) {
+      throw new ValidationError('Company ID is required', 'company_id', company_id)
+    }
+    if (!title || String(title).trim().length === 0) {
+      throw new ValidationError('RFQ title is required', 'title', title)
+    }
+    
     await client.query('begin')
     const rfqResult = await client.query(
       `insert into quotation_requests (company_id, project_id, title, description, due_date, status)
@@ -53,6 +64,7 @@ router.post('/', enforceCompanyScope, async (req, res) => {
       [company_id, project_id || null, title, description || null, due_date || null]
     )
     const rfq = rfqResult.rows[0]
+    
     if (Array.isArray(items) && items.length > 0) {
       for (const it of items) {
         await client.query(
@@ -62,16 +74,16 @@ router.post('/', enforceCompanyScope, async (req, res) => {
         )
       }
     }
+    
     await client.query('commit')
     res.status(201).json(rfq)
-  } catch (e) {
+  } catch (error) {
     await (client.query('rollback').catch(() => {}))
-    if ((e.code || '') === '23503') return res.status(400).json({ error: 'invalid_fk' })
-    throw e
+    handleDatabaseError(error, 'creating RFQ')
   } finally {
     client.release()
   }
-})
+}))
 
 // Get RFQ details with items
 router.get('/:id', enforceCompanyScope, async (req, res) => {
@@ -146,27 +158,43 @@ router.post('/:id/negotiations', enforceCompanyScope, async (req, res) => {
 })
 
 // Approve a vendor quote -> create Purchase Order
-router.post('/:id/approve', enforceCompanyScope, async (req, res) => {
+router.post('/:id/approve', enforceCompanyScope, asyncHandler(async (req, res) => {
   const rfqId = req.params.id
   const { vendor_quote_id } = req.body || {}
-  if (!vendor_quote_id) return res.status(400).json({ error: 'vendor_quote_id_required' })
+  
+  if (!vendor_quote_id) {
+    throw new ValidationError('Vendor quote ID is required', 'vendor_quote_id', vendor_quote_id)
+  }
+  
   const client = await pool.connect()
   try {
     await client.query('begin')
+    
+    // Get RFQ details
     const rfq = await client.query('select * from quotation_requests where id = $1', [rfqId])
-    if (rfq.rows.length === 0) return res.status(404).json({ error: 'rfq_not_found' })
+    if (rfq.rows.length === 0) {
+      throw new ValidationError('RFQ not found', 'rfq_id', rfqId)
+    }
+    
+    // Get vendor quote details
     const vq = await client.query('select * from vendor_quotes where id = $1 and rfq_id = $2', [vendor_quote_id, rfqId])
-    if (vq.rows.length === 0) return res.status(404).json({ error: 'quote_not_found' })
+    if (vq.rows.length === 0) {
+      throw new ValidationError('Vendor quote not found', 'vendor_quote_id', vendor_quote_id)
+    }
+    
     const vendorId = vq.rows[0].vendor_id
+    const poNumber = `PO-${Date.now()}` // Simple PO number generation
 
+    // Create Purchase Order
     const po = await client.query(
       `insert into purchase_orders (company_id, project_id, vendor_id, rfq_id, po_number, status, subtotal, total)
-       values ($1,$2,$3,$4, concat('PO-', to_char(now(),'YYYYMMDDHH24MISS')), 'issued', $5, $5)
+       values ($1,$2,$3,$4,$5,'issued', $6, $6)
        returning *`,
-      [rfq.rows[0].company_id, rfq.rows[0].project_id, vendorId, rfqId, vq.rows[0].total]
+      [rfq.rows[0].company_id, rfq.rows[0].project_id, vendorId, rfqId, poNumber, vq.rows[0].total]
     )
     const poId = po.rows[0].id
 
+    // Create PO items from vendor quote items
     const vqItems = await client.query('select * from vendor_quote_items where vendor_quote_id = $1', [vendor_quote_id])
     for (const it of vqItems.rows) {
       await client.query(
@@ -176,17 +204,21 @@ router.post('/:id/approve', enforceCompanyScope, async (req, res) => {
       )
     }
 
+    // Close the RFQ
     await client.query("update quotation_requests set status = 'closed', updated_at = now() where id = $1", [rfqId])
     await client.query('commit')
-    res.status(201).json({ purchase_order: po.rows[0] })
-  } catch (e) {
+    
+    res.status(201).json({ 
+      purchase_order: po.rows[0],
+      message: 'RFQ approved and Purchase Order created successfully'
+    })
+  } catch (error) {
     await (client.query('rollback').catch(() => {}))
-    if ((e.code || '') === '23503') return res.status(400).json({ error: 'invalid_fk' })
-    throw e
+    handleDatabaseError(error, 'approving RFQ and creating PO')
   } finally {
     client.release()
   }
-})
+}))
 
 export default router
 

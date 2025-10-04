@@ -1,48 +1,36 @@
 import dotenv from 'dotenv'
 import { Pool } from 'pg'
-import { mockPool } from './utils/mockDatabase.js'
 
 dotenv.config()
 
-// Enhanced database configuration with fallback
+// Enhanced database configuration
 const databaseUrl = process.env.DATABASE_URL || 'postgresql://localhost:5432/rishabh_vendor_connect'
 
-let pool
-let useMockDatabase = false
+export const pool = new Pool({ 
+  connectionString: databaseUrl,
+  ssl: { rejectUnauthorized: false }, // Always use SSL for production database
+  // Enhanced connection settings
+  max: 20, // Maximum number of clients in the pool
+  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: 10000, // Increased timeout for remote database
+  // Retry configuration
+  retryDelayMs: 1000,
+  maxRetries: 3
+})
 
-try {
-  pool = new Pool({ 
-    connectionString: databaseUrl,
-    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
-    // Enhanced connection settings
-    max: 20, // Maximum number of clients in the pool
-    idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-    connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
-    // Retry configuration
-    retryDelayMs: 1000,
-    maxRetries: 3
-  })
-} catch (error) {
-  console.warn('⚠️  PostgreSQL connection failed, using mock database for testing')
-  pool = mockPool
-  useMockDatabase = true
-}
+// Enhanced error handling for database connections
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle client', err)
+  process.exit(-1)
+})
 
-// Enhanced error handling for database connections (only for real PostgreSQL)
-if (!useMockDatabase) {
-  pool.on('error', (err) => {
-    console.error('Unexpected error on idle client', err)
-    process.exit(-1)
-  })
+pool.on('connect', () => {
+  console.log('✅ Database client connected')
+})
 
-  pool.on('connect', () => {
-    console.log('✅ Database client connected')
-  })
-
-  pool.on('remove', () => {
-    console.log('📤 Database client removed from pool')
-  })
-}
+pool.on('remove', () => {
+  console.log('📤 Database client removed from pool')
+})
 
 export async function verifyDatabaseConnection() {
   let client
@@ -55,15 +43,6 @@ export async function verifyDatabaseConnection() {
   } catch (error) {
     console.error('❌ Database connection failed:', error.message)
     console.error('Database URL:', databaseUrl.replace(/\/\/.*@/, '//***:***@')) // Hide credentials
-    
-    // Fallback to mock database
-    if (!useMockDatabase) {
-      console.warn('⚠️  Switching to mock database for testing...')
-      pool = mockPool
-      useMockDatabase = true
-      return true // Mock database is always "connected"
-    }
-    
     return false
   } finally {
     if (client) {
@@ -106,7 +85,5 @@ export async function getDatabaseHealth() {
   }
 }
 
-// Export the pool
-export { pool }
 
 

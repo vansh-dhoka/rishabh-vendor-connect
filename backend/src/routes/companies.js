@@ -9,10 +9,19 @@ const router = Router()
 router.get('/', enforceCompanyScope, async (req, res) => {
   const limit = Math.min(Number(req.query.limit || 50), 200)
   const offset = Number(req.query.offset || 0)
-  const { rows } = await pool.query(
-    'select * from companies where id = $1 and is_deleted = false order by created_at desc limit $2 offset $3',
-    [req.scope.company_id, limit, offset]
-  )
+  
+  let query, params
+  if (req.scope.company_id) {
+    // Regular user - only their company
+    query = 'select * from companies where id = $1 and is_deleted = false order by created_at desc limit $2 offset $3'
+    params = [req.scope.company_id, limit, offset]
+  } else {
+    // Super admin - all companies
+    query = 'select * from companies where is_deleted = false order by created_at desc limit $1 offset $2'
+    params = [limit, offset]
+  }
+  
+  const { rows } = await pool.query(query, params)
   res.json({ items: rows, limit, offset })
 })
 

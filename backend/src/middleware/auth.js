@@ -28,6 +28,14 @@ export function requireRole(roles) {
 // Enforce that any provided company_id matches the authenticated user's company
 export function enforceCompanyScope(req, res, next) {
   const userCompanyId = req.user?.companyId
+  const userRole = req.user?.role
+  
+  // Super admin can access all companies
+  if (userRole === 'super_admin') {
+    req.scope = { company_id: null } // No company restriction for super admin
+    return next()
+  }
+  
   if (!userCompanyId) return res.status(401).json({ error: 'unauthenticated' })
 
   const bodyCompany = req.body?.company_id

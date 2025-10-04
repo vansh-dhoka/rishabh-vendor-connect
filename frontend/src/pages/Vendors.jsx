@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react'
 import { listCompanies } from '../services/companiesService'
 import { createVendor, deleteVendor, listVendors, updateVendor } from '../services/vendorsService'
+import PageLayout from '../components/PageLayout'
+import DataTable from '../components/DataTable'
+import FilterBar from '../components/FilterBar'
 
 function VendorForm({ companies, initial = {}, onSubmit, onCancel }) {
   const [companyId, setCompanyId] = useState(initial.company_id || '')
@@ -14,27 +17,65 @@ function VendorForm({ companies, initial = {}, onSubmit, onCancel }) {
   const [phone, setPhone] = useState(initial.phone || '')
   const [error, setError] = useState('')
   const disabled = useMemo(() => !companyId || name.trim().length === 0, [companyId, name])
+  
   return (
-    <form onSubmit={async (e) => { e.preventDefault(); setError(''); if (disabled) { setError('Company and name required'); return } await onSubmit({ company_id: companyId, name, gstin, pan, bank_name: bankName, bank_account: bankAccount, ifsc_code: ifsc, email, phone }) }}>
-      <div>
-        <label>Company</label>
-        <select value={companyId} onChange={e => setCompanyId(e.target.value)}>
-          <option value="">Select company</option>
-          {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
+    <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
+      <div className="card-header">
+        <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', color: 'var(--gray-700)' }}>
+          {initial.id ? 'Edit Vendor' : 'Add New Vendor'}
+        </h3>
       </div>
-      <div><label>Name</label><input value={name} onChange={e => setName(e.target.value)} /></div>
-      <div><label>GSTIN</label><input value={gstin} onChange={e => setGstin(e.target.value)} /></div>
-      <div><label>PAN</label><input value={pan} onChange={e => setPan(e.target.value)} /></div>
-      <div><label>Bank</label><input placeholder="Bank name" value={bankName} onChange={e => setBankName(e.target.value)} /></div>
-      <div><label>Account</label><input placeholder="Account number" value={bankAccount} onChange={e => setBankAccount(e.target.value)} /></div>
-      <div><label>IFSC</label><input value={ifsc} onChange={e => setIfsc(e.target.value)} /></div>
-      <div><label>Email</label><input value={email} onChange={e => setEmail(e.target.value)} /></div>
-      <div><label>Phone</label><input value={phone} onChange={e => setPhone(e.target.value)} /></div>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      <button type="submit" disabled={disabled}>Save</button>
-      <button type="button" onClick={onCancel}>Cancel</button>
-    </form>
+      <div className="card-body">
+        <form onSubmit={async (e) => { e.preventDefault(); setError(''); if (disabled) { setError('Company and name required'); return } await onSubmit({ company_id: companyId, name, gstin, pan, bank_name: bankName, bank_account: bankAccount, ifsc_code: ifsc, email, phone }) }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 'var(--space-4)' }}>
+            <div className="form-group">
+              <label className="form-label">Company *</label>
+              <select className="form-input" value={companyId} onChange={e => setCompanyId(e.target.value)}>
+                <option value="">Select company</option>
+                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Name *</label>
+              <input className="form-input" value={name} onChange={e => setName(e.target.value)} placeholder="Vendor name" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">GSTIN</label>
+              <input className="form-input" value={gstin} onChange={e => setGstin(e.target.value)} placeholder="GSTIN number" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">PAN</label>
+              <input className="form-input" value={pan} onChange={e => setPan(e.target.value)} placeholder="PAN number" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Bank Name</label>
+              <input className="form-input" placeholder="Bank name" value={bankName} onChange={e => setBankName(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Account Number</label>
+              <input className="form-input" placeholder="Account number" value={bankAccount} onChange={e => setBankAccount(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">IFSC Code</label>
+              <input className="form-input" value={ifsc} onChange={e => setIfsc(e.target.value)} placeholder="IFSC code" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Email</label>
+              <input className="form-input" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="Email address" />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Phone</label>
+              <input className="form-input" value={phone} onChange={e => setPhone(e.target.value)} placeholder="Phone number" />
+            </div>
+          </div>
+          {error && <div className="error-message" style={{ marginTop: 'var(--space-4)' }}>{error}</div>}
+          <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-6)' }}>
+            <button type="submit" className="btn btn-primary" disabled={disabled}>Save Vendor</button>
+            <button type="button" className="btn btn-secondary" onClick={onCancel}>Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
   )
 }
 
@@ -68,56 +109,163 @@ export default function Vendors() {
   useEffect(() => { refreshCompanies() }, [])
   useEffect(() => { refreshVendors() }, [companyId])
 
+  const filters = [
+    {
+      key: 'companyId',
+      label: 'Company',
+      type: 'select',
+      value: companyId,
+      options: companies.map(c => ({ value: c.id, label: c.name }))
+    }
+  ]
+
+  const handleFilterChange = (key, value) => {
+    if (key === 'companyId') {
+      setCompanyId(value)
+    }
+  }
+
+  const columns = [
+    {
+      header: 'Name',
+      key: 'name',
+      render: (row) => (
+        <div>
+          <div style={{ fontWeight: '600', color: 'var(--gray-800)' }}>{row.name}</div>
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--gray-500)', fontFamily: 'monospace' }}>
+            ID: {row.id.slice(0, 8)}
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'GSTIN',
+      key: 'gstin',
+      render: (row) => (
+        <div style={{ fontSize: 'var(--font-size-sm)', fontFamily: 'monospace', color: 'var(--gray-600)' }}>
+          {row.gstin || 'N/A'}
+        </div>
+      )
+    },
+    {
+      header: 'PAN',
+      key: 'pan',
+      render: (row) => (
+        <div style={{ fontSize: 'var(--font-size-sm)', fontFamily: 'monospace', color: 'var(--gray-600)' }}>
+          {row.pan || 'N/A'}
+        </div>
+      )
+    },
+    {
+      header: 'Contact',
+      key: 'contact',
+      render: (row) => (
+        <div>
+          <div style={{ fontSize: 'var(--font-size-sm)', color: 'var(--gray-700)' }}>{row.email || 'N/A'}</div>
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--gray-500)' }}>{row.phone || 'N/A'}</div>
+        </div>
+      )
+    },
+    {
+      header: 'Bank Details',
+      key: 'bank',
+      render: (row) => (
+        <div>
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--gray-600)' }}>{row.bank_name || 'N/A'}</div>
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--gray-500)', fontFamily: 'monospace' }}>
+            {row.bank_account ? `****${row.bank_account.slice(-4)}` : 'N/A'}
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Created',
+      key: 'created_at',
+      render: (row) => (
+        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--gray-500)' }}>
+          {new Date(row.created_at).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      header: 'Actions',
+      key: 'actions',
+      render: (row) => (
+        <div style={{ display: 'flex', gap: 'var(--space-2)' }}>
+          <button 
+            className="btn btn-sm btn-secondary" 
+            onClick={() => setEditing(row)}
+          >
+            Edit
+          </button>
+          <button 
+            className="btn btn-sm btn-danger" 
+            onClick={async () => { 
+              if (confirm('Are you sure you want to delete this vendor?')) {
+                await deleteVendor(row.id); 
+                refreshVendors() 
+              }
+            }}
+          >
+            Delete
+          </button>
+        </div>
+      )
+    }
+  ]
+
   return (
-    <div style={{ padding: 24 }}>
-      <h3>Vendors</h3>
-      <div style={{ marginBottom: 12 }}>
-        <label>Company: </label>
-        <select value={companyId} onChange={e => setCompanyId(e.target.value)}>
-          <option value="">Select company</option>
-          {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        {!adding && !editing && (
-          <button disabled={!companyId} style={{ marginLeft: 12 }} onClick={() => setAdding(true)}>Add Vendor</button>
-        )}
-      </div>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
+    <PageLayout
+      title="Vendors"
+      subtitle="Manage your vendor database and contact information"
+      loading={loading}
+      error={error}
+      actions={
+        !adding && !editing && (
+          <button 
+            className="btn btn-primary" 
+            disabled={!companyId} 
+            onClick={() => setAdding(true)}
+          >
+            Add New Vendor
+          </button>
+        )
+      }
+    >
+      <FilterBar filters={filters} onFilterChange={handleFilterChange} />
+      
       {adding && (
-        <VendorForm companies={companies} onSubmit={async (payload) => { await createVendor(payload); setAdding(false); refreshVendors() }} onCancel={() => setAdding(false)} />
+        <VendorForm 
+          companies={companies} 
+          onSubmit={async (payload) => { 
+            await createVendor(payload); 
+            setAdding(false); 
+            refreshVendors() 
+          }} 
+          onCancel={() => setAdding(false)} 
+        />
       )}
+      
       {editing && (
-        <VendorForm companies={companies} initial={editing} onSubmit={async (payload) => { await updateVendor(editing.id, payload); setEditing(null); refreshVendors() }} onCancel={() => setEditing(null)} />
+        <VendorForm 
+          companies={companies} 
+          initial={editing} 
+          onSubmit={async (payload) => { 
+            await updateVendor(editing.id, payload); 
+            setEditing(null); 
+            refreshVendors() 
+          }} 
+          onCancel={() => setEditing(null)} 
+        />
       )}
-      {loading ? <div>Loading...</div> : (
-        <table cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th align="left">Name</th>
-              <th align="left">GSTIN</th>
-              <th align="left">PAN</th>
-              <th align="left">Email</th>
-              <th align="left">Phone</th>
-              <th align="left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(v => (
-              <tr key={v.id} style={{ borderTop: '1px solid #eee' }}>
-                <td>{v.name}</td>
-                <td>{v.gstin}</td>
-                <td>{v.pan}</td>
-                <td>{v.email}</td>
-                <td>{v.phone}</td>
-                <td>
-                  <button onClick={() => setEditing(v)}>Edit</button>
-                  <button onClick={async () => { await deleteVendor(v.id); refreshVendors() }}>Delete</button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-    </div>
+      
+      <DataTable
+        data={items}
+        columns={columns}
+        loading={loading}
+        emptyMessage={companyId ? "No vendors found for this company. Add your first vendor to get started." : "Select a company to view vendors."}
+      />
+    </PageLayout>
   )
 }
 

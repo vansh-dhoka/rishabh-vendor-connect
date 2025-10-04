@@ -3,6 +3,10 @@ import { Link } from 'react-router-dom'
 import { listCompanies } from '../services/companiesService'
 import { listProjects } from '../services/projectsService'
 import { listRfqs } from '../services/rfqsService'
+import PageLayout from '../components/PageLayout'
+import DataTable from '../components/DataTable'
+import FilterBar from '../components/FilterBar'
+import StatusBadge from '../components/StatusBadge'
 
 export default function Rfqs() {
   const [companies, setCompanies] = useState([])
@@ -22,43 +26,108 @@ export default function Rfqs() {
     finally { setLoading(false) }
   })() }, [companyId, projectId])
 
-  if (loading) return <div style={{ padding: 24 }}>Loading...</div>
-  if (error) return <div style={{ padding: 24, color: 'red' }}>{error}</div>
+  const filters = [
+    {
+      key: 'companyId',
+      label: 'Company',
+      type: 'select',
+      value: companyId,
+      options: companies.map(c => ({ value: c.id, label: c.name }))
+    },
+    {
+      key: 'projectId',
+      label: 'Project',
+      type: 'select',
+      value: projectId,
+      options: projects.map(p => ({ value: p.id, label: p.name }))
+    }
+  ]
+
+  const handleFilterChange = (key, value) => {
+    if (key === 'companyId') {
+      setCompanyId(value)
+      setProjectId('')
+    } else if (key === 'projectId') {
+      setProjectId(value)
+    }
+  }
+
+  const columns = [
+    {
+      header: 'Title',
+      key: 'title',
+      render: (row) => (
+        <div>
+          <div style={{ fontWeight: '600', color: 'var(--gray-800)' }}>{row.title}</div>
+          <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--gray-500)', fontFamily: 'monospace' }}>
+            ID: {row.id.slice(0, 8)}
+          </div>
+        </div>
+      )
+    },
+    {
+      header: 'Description',
+      key: 'description',
+      render: (row) => (
+        <div style={{ maxWidth: '300px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          {row.description || 'No description'}
+        </div>
+      )
+    },
+    {
+      header: 'Project',
+      key: 'project_id',
+      render: (row) => (
+        <div style={{ fontSize: 'var(--font-size-xs)', fontFamily: 'monospace', color: 'var(--gray-500)' }}>
+          {row.project_id ? row.project_id.slice(0, 8) : 'N/A'}
+        </div>
+      )
+    },
+    {
+      header: 'Status',
+      key: 'status',
+      render: (row) => <StatusBadge status={row.status} type="quote" />
+    },
+    {
+      header: 'Created',
+      key: 'created_at',
+      render: (row) => (
+        <div style={{ fontSize: 'var(--font-size-xs)', color: 'var(--gray-500)' }}>
+          {new Date(row.created_at).toLocaleDateString()}
+        </div>
+      )
+    },
+    {
+      header: 'Actions',
+      key: 'actions',
+      render: (row) => (
+        <Link to={`/rfqs/${row.id}`} className="btn btn-sm btn-primary">
+          View Details
+        </Link>
+      )
+    }
+  ]
 
   return (
-    <div style={{ padding: 24 }}>
-      <h3>RFQs</h3>
-      <div style={{ marginBottom: 12, display: 'flex', gap: 8 }}>
-        <select value={companyId} onChange={e => setCompanyId(e.target.value)}>
-          <option value="">All companies</option>
-          {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={projectId} onChange={e => setProjectId(e.target.value)}>
-          <option value="">All projects</option>
-          {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-        </select>
-        <Link to="/rfqs/compose">Create RFQ</Link>
-      </div>
-      <table cellPadding="8" style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th align="left">Title</th>
-            <th align="left">Status</th>
-            <th align="left">Due</th>
-            <th align="left">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((p) => (
-            <tr key={p.id || Math.random()} style={{ borderTop: '1px solid #eee' }}>
-              <td>{p.title}</td>
-              <td>{p.status}</td>
-              <td>{p.due_date || '-'}</td>
-              <td><Link to={`/rfqs/${p.id}`}>Open</Link></td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <PageLayout
+      title="Request for Quotations (RFQs)"
+      subtitle="Manage and track all your RFQ requests"
+      loading={loading}
+      error={error}
+      actions={
+        <Link to="/rfqs/compose" className="btn btn-primary">
+          Create New RFQ
+        </Link>
+      }
+    >
+      <FilterBar filters={filters} onFilterChange={handleFilterChange} />
+      
+      <DataTable
+        data={items}
+        columns={columns}
+        loading={loading}
+        emptyMessage="No RFQs found. Create your first RFQ to get started."
+      />
+    </PageLayout>
   )
 }

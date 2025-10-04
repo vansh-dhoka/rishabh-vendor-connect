@@ -1,23 +1,23 @@
 import { Router } from 'express'
-import AWS from 'aws-sdk'
+import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 const router = Router()
 
-const s3 = new AWS.S3({ region: process.env.AWS_REGION })
+const s3Client = new S3Client({ region: process.env.AWS_REGION })
 
 router.post('/sign-upload', async (req, res) => {
   const { key, contentType } = req.body || {}
   if (!key || !contentType) return res.status(400).json({ error: 'key and contentType required' })
 
-  const params = {
+  const command = new PutObjectCommand({
     Bucket: process.env.S3_BUCKET,
     Key: key,
-    ContentType: contentType,
-    Expires: 60
-  }
+    ContentType: contentType
+  })
 
   try {
-    const url = await s3.getSignedUrlPromise('putObject', params)
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 })
     res.json({ url, key })
   } catch (e) {
     res.status(500).json({ error: 'failed_to_sign', detail: e?.message })
@@ -28,14 +28,13 @@ router.get('/sign-download', async (req, res) => {
   const { key } = req.query || {}
   if (!key) return res.status(400).json({ error: 'key required' })
 
-  const params = {
+  const command = new GetObjectCommand({
     Bucket: process.env.S3_BUCKET,
-    Key: key,
-    Expires: 60
-  }
+    Key: key
+  })
 
   try {
-    const url = await s3.getSignedUrlPromise('getObject', params)
+    const url = await getSignedUrl(s3Client, command, { expiresIn: 60 })
     res.json({ url, key })
   } catch (e) {
     res.status(500).json({ error: 'failed_to_sign', detail: e?.message })

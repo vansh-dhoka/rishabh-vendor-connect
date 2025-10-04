@@ -1,7 +1,7 @@
 import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
-import { verifyDatabaseConnection } from './db.js'
+import { verifyDatabaseConnection, getDatabaseHealth } from './db.js'
 import vendorsRouter from './routes/vendors.js'
 import companiesRouter from './routes/companies.js'
 import itemsRouter from './routes/items.js'
@@ -18,6 +18,7 @@ import rfqsRouter from './routes/rfqs.js'
 import monitoringRouter from './routes/monitoring.js'
 import { rateLimit } from './middleware/validation.js'
 import { getHealthStatus, logError, requestLogger, getDatabaseStats, getApplicationMetrics } from './utils/monitoring.js'
+import { errorHandler, asyncHandler } from './utils/errorHandler.js'
 
 dotenv.config()
 
@@ -74,9 +75,19 @@ app.get('/health', (_req, res) => {
 // Enhanced health check endpoint with database status
 app.get('/health/detailed', async (_req, res) => {
   try {
-    const health = await getHealthStatus()
-    const statusCode = health.status === 'ok' ? 200 : 503
-    res.status(statusCode).json(health)
+    const [health, dbHealth] = await Promise.all([
+      getHealthStatus(),
+      getDatabaseHealth()
+    ])
+    
+    const overallStatus = health.status === 'ok' && dbHealth.status === 'healthy' ? 'ok' : 'error'
+    const statusCode = overallStatus === 'ok' ? 200 : 503
+    
+    res.status(statusCode).json({
+      ...health,
+      database: dbHealth,
+      overall: overallStatus
+    })
   } catch (error) {
     logError(error, { endpoint: '/health/detailed' })
     res.status(500).json({ 
@@ -324,19 +335,7 @@ app.post('/api/admin/create-sample-data', requireAuth, async (req, res) => {
 })
 
 // Global error handler
-app.use((error, req, res, next) => {
-  logError(error, { 
-    method: req.method, 
-    url: req.url, 
-    body: req.body,
-    user: req.user?.id 
-  })
-  
-  res.status(500).json({ 
-    error: 'Internal server error',
-    message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
-  })
-})
+app.use(errorHandler)
 
 // 404 handler
 app.use((req, res) => {
@@ -344,15 +343,38 @@ app.use((req, res) => {
 })
 
 const port = process.env.PORT || 4000
-app.listen(port, () => {
-  // eslint-disable-next-line no-console
-  console.log(`🚀 Rishabh Vendor Connect API started successfully!`)
-  console.log(`📡 API listening on port ${port}`)
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
-  console.log(`❤️  Health check: http://localhost:${port}/health`)
-  console.log(`📊 Detailed health: http://localhost:${port}/health/detailed`)
-  console.log(`🔗 Database URL configured: ${process.env.DATABASE_URL ? 'Yes' : 'No'}`)
-})
+
+// Start server with database verification
+async function startServer() {
+  try {
+    // Verify database connection before starting server
+    console.log('🔍 Verifying database connection...')
+    const dbConnected = await verifyDatabaseConnection()
+    
+    if (!dbConnected) {
+      console.error('❌ Failed to connect to database. Server will start but some features may not work.')
+      console.log('💡 Make sure PostgreSQL is running and DATABASE_URL is correct')
+    } else {
+      console.log('✅ Database connection verified successfully!')
+    }
+    
+    app.listen(port, () => {
+      // eslint-disable-next-line no-console
+      console.log(`🚀 Rishabh Vendor Connect API started successfully!`)
+      console.log(`📡 API listening on port ${port}`)
+      console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`)
+      console.log(`❤️  Health check: http://localhost:${port}/health`)
+      console.log(`📊 Detailed health: http://localhost:${port}/health/detailed`)
+      console.log(`🔗 Database URL configured: ${process.env.DATABASE_URL ? 'Yes' : 'No'}`)
+      console.log(`🗄️  Database status: ${dbConnected ? 'Connected' : 'Disconnected'}`)
+    })
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message)
+    process.exit(1)
+  }
+}
+
+startServer()
 
 export default app
 

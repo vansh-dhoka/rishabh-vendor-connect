@@ -3,8 +3,18 @@ import { Link } from 'react-router-dom'
 import { getDashboardData, getCompanies, getProjects, getVendors } from '../services/dashboardService'
 import StatusBadge from '../components/StatusBadge'
 import PageLayout from '../components/PageLayout'
+import RoleGuard, { useRoleAccess } from '../components/RoleGuard'
 
 export default function Dashboard() {
+  const { 
+    canCreateRFQs, 
+    canApprovePOs, 
+    canApproveInvoices,
+    isVendor,
+    isViewer,
+    hasWriteAccess
+  } = useRoleAccess()
+  
   const [companies, setCompanies] = useState([])
   const [projects, setProjects] = useState([])
   const [vendors, setVendors] = useState([])
@@ -68,49 +78,55 @@ export default function Dashboard() {
       loading={loading}
       error={error}
     >
-      {/* Filters */}
-      <div className="form-section">
-        <div className="form-section-header">
-          <span className="form-section-icon">🔍</span>
-          <h3 className="form-section-title">Filters</h3>
-        </div>
-        
-        <div className="responsive-grid-sm">
-          <div className="form-group">
-            <label className="form-label">Company</label>
-            <select 
-              className="form-input"
-              value={companyId} 
-              onChange={e => { setCompanyId(e.target.value); setProjectId(''); setVendorId('') }}
-            >
-              <option value="">All Companies</option>
-              {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Project</label>
-            <select 
-              className="form-input"
-              value={projectId} 
-              onChange={e => setProjectId(e.target.value)}
-            >
-              <option value="">All Projects</option>
-              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </select>
-          </div>
-          <div className="form-group">
-            <label className="form-label">Vendor</label>
-            <select 
-              className="form-input"
-              value={vendorId} 
-              onChange={e => setVendorId(e.target.value)}
-            >
-              <option value="">All Vendors</option>
-              {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
-          </div>
-        </div>
-      </div>
+          {/* Filters */}
+          <RoleGuard allowedRoles={['super_admin', 'company_admin', 'project_manager', 'finance_manager']}>
+            <div className="form-section">
+              <div className="form-section-header">
+                <span className="form-section-icon">🔍</span>
+                <h3 className="form-section-title">Filters</h3>
+              </div>
+              
+              <div className="responsive-grid-sm">
+                <RoleGuard allowedRoles={['super_admin']}>
+                  <div className="form-group">
+                    <label className="form-label">Company</label>
+                    <select 
+                      className="form-input"
+                      value={companyId} 
+                      onChange={e => { setCompanyId(e.target.value); setProjectId(''); setVendorId('') }}
+                    >
+                      <option value="">All Companies</option>
+                      {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                </RoleGuard>
+                
+                <div className="form-group">
+                  <label className="form-label">Project</label>
+                  <select 
+                    className="form-input"
+                    value={projectId} 
+                    onChange={e => setProjectId(e.target.value)}
+                  >
+                    <option value="">All Projects</option>
+                    {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label className="form-label">Vendor</label>
+                  <select 
+                    className="form-input"
+                    value={vendorId} 
+                    onChange={e => setVendorId(e.target.value)}
+                  >
+                    <option value="">All Vendors</option>
+                    {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                  </select>
+                </div>
+              </div>
+            </div>
+          </RoleGuard>
 
       {/* Dashboard Overview Cards */}
       <div className="responsive-grid">
@@ -278,114 +294,122 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="form-section">
-        <div className="form-section-header">
-          <span className="form-section-icon">⚡</span>
-          <h3 className="form-section-title">Quick Actions</h3>
-        </div>
-        
-        <div className="responsive-grid-sm">
-          <Link 
-            to="/rfqs/compose"
-            className="info-card"
-            style={{ 
-              textDecoration: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              padding: 'var(--space-6)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)'
-              e.target.style.boxShadow = 'var(--shadow-lg)'
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)'
-              e.target.style.boxShadow = 'var(--shadow-sm)'
-            }}
-          >
-            <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
-              <span className="info-card-icon" style={{ fontSize: '2rem' }}>📋</span>
-              <div>
-                <h4 className="info-card-title">Create RFQ</h4>
-                <p className="info-card-subtitle">Request quotes from vendors</p>
+          {/* Quick Actions */}
+          <RoleGuard allowedRoles={['super_admin', 'company_admin', 'project_manager', 'finance_manager', 'vendor']}>
+            <div className="form-section">
+              <div className="form-section-header">
+                <span className="form-section-icon">⚡</span>
+                <h3 className="form-section-title">Quick Actions</h3>
               </div>
-            </div>
-            <div className="text-sm text-muted">
-              Start a new request for quotation to get competitive pricing
-            </div>
-          </Link>
+              
+              <div className="responsive-grid-sm">
+                <RoleGuard allowedRoles={['super_admin', 'company_admin', 'project_manager']}>
+                  <Link 
+                    to="/rfqs/compose"
+                    className="info-card"
+                    style={{ 
+                      textDecoration: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      padding: 'var(--space-6)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'translateY(-2px)'
+                      e.target.style.boxShadow = 'var(--shadow-lg)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)'
+                      e.target.style.boxShadow = 'var(--shadow-sm)'
+                    }}
+                  >
+                    <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
+                      <span className="info-card-icon" style={{ fontSize: '2rem' }}>📋</span>
+                      <div>
+                        <h4 className="info-card-title">Create RFQ</h4>
+                        <p className="info-card-subtitle">Request quotes from vendors</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted">
+                      Start a new request for quotation to get competitive pricing
+                    </div>
+                  </Link>
+                </RoleGuard>
 
-          <Link 
-            to="/pos/create"
-            className="info-card"
-            style={{ 
-              textDecoration: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              padding: 'var(--space-6)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)'
-              e.target.style.boxShadow = 'var(--shadow-lg)'
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)'
-              e.target.style.boxShadow = 'var(--shadow-sm)'
-            }}
-          >
-            <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
-              <span className="info-card-icon" style={{ fontSize: '2rem' }}>📄</span>
-              <div>
-                <h4 className="info-card-title">Create PO</h4>
-                <p className="info-card-subtitle">Create purchase order from quote</p>
-              </div>
-            </div>
-            <div className="text-sm text-muted">
-              Convert approved vendor quotes into purchase orders
-            </div>
-          </Link>
+                <RoleGuard allowedRoles={['super_admin', 'company_admin', 'project_manager']}>
+                  <Link 
+                    to="/pos/create"
+                    className="info-card"
+                    style={{ 
+                      textDecoration: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      padding: 'var(--space-6)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'translateY(-2px)'
+                      e.target.style.boxShadow = 'var(--shadow-lg)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)'
+                      e.target.style.boxShadow = 'var(--shadow-sm)'
+                    }}
+                  >
+                    <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
+                      <span className="info-card-icon" style={{ fontSize: '2rem' }}>📄</span>
+                      <div>
+                        <h4 className="info-card-title">Create PO</h4>
+                        <p className="info-card-subtitle">Create purchase order from quote</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted">
+                      Convert approved vendor quotes into purchase orders
+                    </div>
+                  </Link>
+                </RoleGuard>
 
-          <Link 
-            to="/invoices"
-            className="info-card"
-            style={{ 
-              textDecoration: 'none',
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              textAlign: 'center',
-              padding: 'var(--space-6)',
-              transition: 'all 0.2s ease'
-            }}
-            onMouseEnter={(e) => {
-              e.target.style.transform = 'translateY(-2px)'
-              e.target.style.boxShadow = 'var(--shadow-lg)'
-            }}
-            onMouseLeave={(e) => {
-              e.target.style.transform = 'translateY(0)'
-              e.target.style.boxShadow = 'var(--shadow-sm)'
-            }}
-          >
-            <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
-              <span className="info-card-icon" style={{ fontSize: '2rem' }}>💰</span>
-              <div>
-                <h4 className="info-card-title">View Invoices</h4>
-                <p className="info-card-subtitle">Manage all invoices</p>
+                <RoleGuard allowedRoles={['super_admin', 'company_admin', 'finance_manager', 'vendor']}>
+                  <Link 
+                    to="/invoices"
+                    className="info-card"
+                    style={{ 
+                      textDecoration: 'none',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      padding: 'var(--space-6)',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.target.style.transform = 'translateY(-2px)'
+                      e.target.style.boxShadow = 'var(--shadow-lg)'
+                    }}
+                    onMouseLeave={(e) => {
+                      e.target.style.transform = 'translateY(0)'
+                      e.target.style.boxShadow = 'var(--shadow-sm)'
+                    }}
+                  >
+                    <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
+                      <span className="info-card-icon" style={{ fontSize: '2rem' }}>💰</span>
+                      <div>
+                        <h4 className="info-card-title">View Invoices</h4>
+                        <p className="info-card-subtitle">Manage all invoices</p>
+                      </div>
+                    </div>
+                    <div className="text-sm text-muted">
+                      Review, approve, and track all invoice payments
+                    </div>
+                  </Link>
+                </RoleGuard>
               </div>
             </div>
-            <div className="text-sm text-muted">
-              Review, approve, and track all invoice payments
-            </div>
-          </Link>
-        </div>
-      </div>
+          </RoleGuard>
     </PageLayout>
   )
 }

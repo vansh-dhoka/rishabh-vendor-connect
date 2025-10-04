@@ -1,3 +1,5 @@
+import { parseApiError, withErrorHandling } from '../utils/errorHandler.js'
+
 // For production deployment, use the full backend URL
 // Force the correct API URL for onrender.com deployments
 const API_BASE = (() => {
@@ -36,7 +38,7 @@ function getToken() {
   return localStorage.getItem('token')
 }
 
-export async function apiFetch(path, options = {}) {
+export const apiFetch = withErrorHandling(async (path, options = {}) => {
   const headers = new Headers(options.headers || {})
   if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   const token = getToken()
@@ -55,9 +57,17 @@ export async function apiFetch(path, options = {}) {
     clearTimeout(timeoutId)
     
     if (!res.ok) {
-      const errorText = await res.text()
-      console.error(`API Error ${res.status}:`, errorText)
-      throw new Error(`API ${res.status}: ${errorText}`)
+      let errorData
+      try {
+        errorData = await res.json()
+      } catch {
+        errorData = { message: await res.text() }
+      }
+      
+      // Create error object that parseApiError can handle
+      const error = new Error(errorData.message || `HTTP ${res.status}`)
+      error.response = { status: res.status, data: errorData }
+      throw error
     }
     
     const contentType = res.headers.get('content-type') || ''
@@ -66,40 +76,27 @@ export async function apiFetch(path, options = {}) {
   } catch (error) {
     clearTimeout(timeoutId)
     if (error.name === 'AbortError') {
-      throw new Error('Request timeout - please try again')
+      const timeoutError = new Error('Request timeout - please try again')
+      timeoutError.type = 'network_error'
+      throw timeoutError
     }
-    console.error('Fetch error:', error)
-    throw new Error(`Network error: ${error.message}`)
+    throw error
   }
-}
+})
 
-export async function login(email, password) {
+export const login = withErrorHandling(async (email, password) => {
   console.log('Login attempt with API_BASE:', API_BASE)
   console.log('Full URL:', `${API_BASE}/auth/login`)
   
-  // Retry logic for login
-  let lastError
-  for (let attempt = 1; attempt <= 3; attempt++) {
-    try {
-      console.log(`Login attempt ${attempt}/3`)
-      const res = await apiFetch('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      })
-      console.log('Login response:', res)
-      if (res?.token) localStorage.setItem('token', res.token)
-      return res
-    } catch (error) {
-      lastError = error
-      console.error(`Login attempt ${attempt} failed:`, error.message)
-      if (attempt < 3) {
-        console.log(`Retrying in ${attempt * 1000}ms...`)
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000))
-      }
-    }
-  }
-  throw lastError
-}
+  const res = await apiFetch('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password })
+  })
+  
+  console.log('Login response:', res)
+  if (res?.token) localStorage.setItem('token', res.token)
+  return res
+})
 
 export function logout() {
   localStorage.removeItem('token')

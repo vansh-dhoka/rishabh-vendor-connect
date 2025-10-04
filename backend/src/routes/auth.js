@@ -1,6 +1,13 @@
 import { Router } from 'express'
 import jwt from 'jsonwebtoken'
 import bcrypt from 'bcryptjs'
+import { 
+  ValidationError, 
+  AuthenticationError, 
+  AuthorizationError,
+  asyncHandler,
+  validateRequired 
+} from '../utils/errorHandler.js'
 
 const router = Router()
 
@@ -128,16 +135,25 @@ const users = [
   }
 ]
 
-router.post('/login', (req, res) => {
+router.post('/login', asyncHandler(async (req, res) => {
   const { email, password } = req.body || {}
-  if (!email || !password) return res.status(400).json({ error: 'email_and_password_required' })
   
+  // Validate required fields
+  validateRequired(['email', 'password'], { email, password })
+  
+  // Find user
   const user = users.find(u => u.email === email && u.isActive)
-  if (!user) return res.status(401).json({ error: 'invalid_credentials' })
+  if (!user) {
+    throw new AuthenticationError('Invalid email or password')
+  }
   
-  const ok = bcrypt.compareSync(password, user.passwordHash)
-  if (!ok) return res.status(401).json({ error: 'invalid_credentials' })
+  // Verify password
+  const passwordValid = bcrypt.compareSync(password, user.passwordHash)
+  if (!passwordValid) {
+    throw new AuthenticationError('Invalid email or password')
+  }
   
+  // Generate JWT token
   const token = jwt.sign({ 
     sub: user.id, 
     companyId: user.companyId, 
@@ -156,7 +172,7 @@ router.post('/login', (req, res) => {
       companyId: user.companyId
     }
   })
-})
+}))
 
 // Get user profile endpoint
 router.get('/profile', (req, res) => {

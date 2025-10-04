@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import apiClient from '../services/apiClient.js'
+import PageLayout from '../components/PageLayout'
 
 export default function UserManagement() {
   const [users, setUsers] = useState([])
@@ -51,149 +52,277 @@ export default function UserManagement() {
     return role.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())
   }
 
-  if (loading) return <div style={{ padding: 20 }}>Loading users...</div>
-  if (error) return <div style={{ padding: 20, color: 'red' }}>{error}</div>
-
   return (
-    <div style={{ padding: 20 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-        <h2>User Management</h2>
+    <PageLayout
+      title="User Management"
+      subtitle="Manage system users and their access permissions"
+      loading={loading}
+      error={error}
+      actions={
         <button 
+          className="btn btn-primary"
           onClick={fetchUsers}
-          style={{
-            padding: '8px 16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: 4,
-            cursor: 'pointer'
-          }}
         >
-          Refresh
+          Refresh Users
         </button>
-      </div>
-
-      <div style={{ 
-        backgroundColor: '#f8f9fa', 
-        padding: 15, 
-        borderRadius: 8, 
-        marginBottom: 20,
-        fontSize: 14
-      }}>
-        <strong>User Roles & Permissions:</strong>
-        <ul style={{ margin: '10px 0', paddingLeft: 20 }}>
-          <li><strong>🔑 Super Admin:</strong> Full system access, user management</li>
-          <li><strong>🏢 Company Admin:</strong> Full access to assigned company</li>
-          <li><strong>📋 Project Manager:</strong> Manage projects, RFQs, and vendors</li>
-          <li><strong>💰 Finance Manager:</strong> Handle POs, invoices, and payments</li>
-          <li><strong>🏗️ Vendor:</strong> Submit quotes and manage profile</li>
-          <li><strong>👁️ Viewer:</strong> Read-only access to company data</li>
-        </ul>
-      </div>
-
-      <div style={{ 
-        display: 'grid', 
-        gap: 15,
-        gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))'
-      }}>
-        {users.map(user => (
-          <div 
-            key={user.id}
-            style={{
-              border: '1px solid #dee2e6',
-              borderRadius: 8,
-              padding: 15,
-              backgroundColor: 'white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-              <span style={{ fontSize: 20 }}>{getRoleIcon(user.role)}</span>
+      }
+    >
+      {/* Role Information */}
+      <div className="form-section">
+        <div className="form-section-header">
+          <span className="form-section-icon">👥</span>
+          <h3 className="form-section-title">User Roles & Permissions</h3>
+        </div>
+        
+        <div className="responsive-grid-sm">
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">🔑</span>
               <div>
-                <div style={{ fontWeight: 'bold', fontSize: 16 }}>{user.name}</div>
-                <div style={{ 
-                  fontSize: 12, 
-                  color: getRoleColor(user.role),
-                  fontWeight: 'bold'
-                }}>
-                  {formatRole(user.role)}
-                </div>
+                <h4 className="info-card-title">Super Admin</h4>
+                <p className="info-card-subtitle">Full system access</p>
               </div>
             </div>
-            
-            <div style={{ marginBottom: 10 }}>
-              <div style={{ fontSize: 14, color: '#6c757d' }}>
-                <strong>Email:</strong> {user.email}
-              </div>
-              <div style={{ fontSize: 14, color: '#6c757d' }}>
-                <strong>Company:</strong> {user.companyId || 'All Companies'}
-              </div>
-              <div style={{ fontSize: 14, color: '#6c757d' }}>
-                <strong>Status:</strong> 
-                <span style={{ 
-                  color: user.isActive ? '#28a745' : '#dc3545',
-                  fontWeight: 'bold',
-                  marginLeft: 5
-                }}>
-                  {user.isActive ? 'Active' : 'Inactive'}
-                </span>
-              </div>
+            <div className="text-sm text-muted">
+              Complete system control, user management, and administrative functions
             </div>
+          </div>
 
-            <div style={{ 
-              fontSize: 12, 
-              color: '#6c757d',
-              backgroundColor: '#f8f9fa',
-              padding: 8,
-              borderRadius: 4
-            }}>
-              <strong>User ID:</strong> {user.id}
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">🏢</span>
+              <div>
+                <h4 className="info-card-title">Company Admin</h4>
+                <p className="info-card-subtitle">Company management</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              Full access to assigned company data and operations
             </div>
           </div>
-        ))}
-      </div>
 
-      <div style={{ 
-        marginTop: 30, 
-        padding: 20, 
-        backgroundColor: '#e9ecef', 
-        borderRadius: 8,
-        fontSize: 14
-      }}>
-        <h3 style={{ margin: '0 0 15px 0' }}>Quick Login Credentials</h3>
-        <div style={{ display: 'grid', gap: 10, gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
-          <div>
-            <strong>🔑 Super Admin:</strong><br/>
-            superadmin@rishabhvendorconnect.com<br/>
-            <code>SuperAdmin@123</code>
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">📋</span>
+              <div>
+                <h4 className="info-card-title">Project Manager</h4>
+                <p className="info-card-subtitle">Project oversight</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              Manage projects, RFQs, and vendor relationships
+            </div>
           </div>
-          <div>
-            <strong>🏢 Company Admin:</strong><br/>
-            admin@rishabhdevelopers.com<br/>
-            <code>CompanyAdmin@123</code>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">💰</span>
+              <div>
+                <h4 className="info-card-title">Finance Manager</h4>
+                <p className="info-card-subtitle">Financial operations</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              Handle purchase orders, invoices, and payment processing
+            </div>
           </div>
-          <div>
-            <strong>📋 Project Manager:</strong><br/>
-            pm@rishabhdevelopers.com<br/>
-            <code>ProjectManager@123</code>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">🏗️</span>
+              <div>
+                <h4 className="info-card-title">Vendor</h4>
+                <p className="info-card-subtitle">Vendor portal access</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              Submit quotes and manage vendor profile information
+            </div>
           </div>
-          <div>
-            <strong>💰 Finance Manager:</strong><br/>
-            finance@rishabhdevelopers.com<br/>
-            <code>FinanceManager@123</code>
-          </div>
-          <div>
-            <strong>🏗️ Vendor:</strong><br/>
-            vendor@steelconstruction.com<br/>
-            <code>Vendor@123</code>
-          </div>
-          <div>
-            <strong>👁️ Viewer:</strong><br/>
-            viewer@rishabhdevelopers.com<br/>
-            <code>Viewer@123</code>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">👁️</span>
+              <div>
+                <h4 className="info-card-title">Viewer</h4>
+                <p className="info-card-subtitle">Read-only access</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              View company data and reports without modification rights
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* Users Grid */}
+      <div className="form-section">
+        <div className="form-section-header">
+          <span className="form-section-icon">👤</span>
+          <h3 className="form-section-title">System Users</h3>
+        </div>
+        
+        <div className="responsive-grid">
+          {users.map(user => (
+            <div key={user.id} className="info-card">
+              <div className="info-card-header">
+                <span className="info-card-icon">{getRoleIcon(user.role)}</span>
+                <div>
+                  <h4 className="info-card-title">{user.name}</h4>
+                  <p className="info-card-subtitle" style={{ color: getRoleColor(user.role) }}>
+                    {formatRole(user.role)}
+                  </p>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <div className="text-sm mb-2">
+                  <span className="font-weight-medium">Email:</span>
+                  <div className="text-muted">{user.email}</div>
+                </div>
+                <div className="text-sm mb-2">
+                  <span className="font-weight-medium">Company:</span>
+                  <div className="text-muted">{user.companyId || 'All Companies'}</div>
+                </div>
+                <div className="text-sm mb-2">
+                  <span className="font-weight-medium">Status:</span>
+                  <div>
+                    <span 
+                      className="status-container"
+                      style={{
+                        backgroundColor: user.isActive ? 'var(--success-100)' : 'var(--danger-100)',
+                        color: user.isActive ? 'var(--success-700)' : 'var(--danger-700)'
+                      }}
+                    >
+                      <span 
+                        className="status-dot"
+                        style={{
+                          backgroundColor: user.isActive ? 'var(--success-500)' : 'var(--danger-500)'
+                        }}
+                      ></span>
+                      {user.isActive ? 'Active' : 'Inactive'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-xs text-muted p-2" style={{ 
+                backgroundColor: 'var(--gray-50)', 
+                borderRadius: 'var(--radius-sm)',
+                fontFamily: 'monospace'
+              }}>
+                ID: {user.id}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Quick Login Credentials */}
+      <div className="form-section">
+        <div className="form-section-header">
+          <span className="form-section-icon">🔐</span>
+          <h3 className="form-section-title">Quick Login Credentials</h3>
+        </div>
+        
+        <div className="responsive-grid-sm">
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">🔑</span>
+              <div>
+                <h4 className="info-card-title">Super Admin</h4>
+                <p className="info-card-subtitle">Full system access</p>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-weight-medium mb-1">Email:</div>
+              <div className="text-muted font-mono mb-2">superadmin@rishabhvendorconnect.com</div>
+              <div className="font-weight-medium mb-1">Password:</div>
+              <div className="text-muted font-mono">SuperAdmin@123</div>
+            </div>
+          </div>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">🏢</span>
+              <div>
+                <h4 className="info-card-title">Company Admin</h4>
+                <p className="info-card-subtitle">Company management</p>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-weight-medium mb-1">Email:</div>
+              <div className="text-muted font-mono mb-2">admin@rishabhdevelopers.com</div>
+              <div className="font-weight-medium mb-1">Password:</div>
+              <div className="text-muted font-mono">CompanyAdmin@123</div>
+            </div>
+          </div>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">📋</span>
+              <div>
+                <h4 className="info-card-title">Project Manager</h4>
+                <p className="info-card-subtitle">Project oversight</p>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-weight-medium mb-1">Email:</div>
+              <div className="text-muted font-mono mb-2">pm@rishabhdevelopers.com</div>
+              <div className="font-weight-medium mb-1">Password:</div>
+              <div className="text-muted font-mono">ProjectManager@123</div>
+            </div>
+          </div>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">💰</span>
+              <div>
+                <h4 className="info-card-title">Finance Manager</h4>
+                <p className="info-card-subtitle">Financial operations</p>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-weight-medium mb-1">Email:</div>
+              <div className="text-muted font-mono mb-2">finance@rishabhdevelopers.com</div>
+              <div className="font-weight-medium mb-1">Password:</div>
+              <div className="text-muted font-mono">FinanceManager@123</div>
+            </div>
+          </div>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">🏗️</span>
+              <div>
+                <h4 className="info-card-title">Vendor</h4>
+                <p className="info-card-subtitle">Vendor portal access</p>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-weight-medium mb-1">Email:</div>
+              <div className="text-muted font-mono mb-2">vendor@steelconstruction.com</div>
+              <div className="font-weight-medium mb-1">Password:</div>
+              <div className="text-muted font-mono">Vendor@123</div>
+            </div>
+          </div>
+
+          <div className="info-card">
+            <div className="info-card-header">
+              <span className="info-card-icon">👁️</span>
+              <div>
+                <h4 className="info-card-title">Viewer</h4>
+                <p className="info-card-subtitle">Read-only access</p>
+              </div>
+            </div>
+            <div className="text-sm">
+              <div className="font-weight-medium mb-1">Email:</div>
+              <div className="text-muted font-mono mb-2">viewer@rishabhdevelopers.com</div>
+              <div className="font-weight-medium mb-1">Password:</div>
+              <div className="text-muted font-mono">Viewer@123</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </PageLayout>
   )
 }

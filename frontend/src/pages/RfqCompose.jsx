@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { listCompanies } from '../services/companiesService'
 import { listProjects } from '../services/projectsService'
 import { createRfq } from '../services/rfqsService'
+import PageLayout from '../components/PageLayout'
 
 export default function RfqCompose() {
   const [companies, setCompanies] = useState([])
@@ -14,6 +15,7 @@ export default function RfqCompose() {
   const [items, setItems] = useState([{ description: '', quantity: 1, target_rate: 0 }])
   const [error, setError] = useState('')
   const [ok, setOk] = useState('')
+  const [loading, setLoading] = useState(false)
   const disabled = useMemo(() => !companyId || title.trim().length === 0, [companyId, title])
 
   useEffect(() => {
@@ -51,6 +53,7 @@ export default function RfqCompose() {
     e.preventDefault()
     setError('')
     setOk('')
+    setLoading(true)
     try {
       const payload = {
         company_id: companyId,
@@ -61,56 +64,204 @@ export default function RfqCompose() {
         items: items.map(i => ({ description: i.description, quantity: Number(i.quantity || 1), target_rate: Number(i.target_rate || 0) }))
       }
       await createRfq(payload)
-      setOk('RFQ created')
+      setOk('RFQ created successfully!')
       setTitle('')
       setDescription('')
       setDueDate('')
       setItems([{ description: '', quantity: 1, target_rate: 0 }])
     } catch (e) {
       setError('Failed to create RFQ')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
-    <div style={{ padding: 24 }}>
-      <h3>Create Quotation Request</h3>
-      {error && <div style={{ color: 'red' }}>{error}</div>}
-      {ok && <div style={{ color: 'green' }}>{ok}</div>}
+    <PageLayout
+      title="Create Request for Quotation"
+      subtitle="Create a new RFQ to request quotes from vendors"
+    >
+      {error && <div className="error-message">{error}</div>}
+      {ok && <div className="success-message">{ok}</div>}
+      
       <form onSubmit={submit}>
-        <div>
-          <label>Company</label>
-          <select value={companyId} onChange={e => setCompanyId(e.target.value)}>
-            <option value="">Select company</option>
-            {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-          </select>
-        </div>
-        <div>
-          <label>Project</label>
-          <select value={projectId} onChange={e => setProjectId(e.target.value)}>
-            <option value="">(Optional) Select project</option>
-            {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
-        </div>
-        <div><label>Title</label><input value={title} onChange={e => setTitle(e.target.value)} /></div>
-        <div><label>Description</label><textarea value={description} onChange={e => setDescription(e.target.value)} /></div>
-        <div><label>Due Date</label><input type="date" value={dueDate} onChange={e => setDueDate(e.target.value)} /></div>
-        <div style={{ marginTop: 12 }}>
-          <h4>Items</h4>
-          {items.map((it, idx) => (
-            <div key={idx} style={{ display: 'grid', gridTemplateColumns: '1fr 120px 120px 80px', gap: 8, alignItems: 'center', marginBottom: 8 }}>
-              <input placeholder="Description" value={it.description} onChange={e => updateItem(idx, 'description', e.target.value)} />
-              <input type="number" placeholder="Qty" value={it.quantity} onChange={e => updateItem(idx, 'quantity', e.target.value)} />
-              <input type="number" placeholder="Target rate" value={it.target_rate} onChange={e => updateItem(idx, 'target_rate', e.target.value)} />
-              <button type="button" onClick={() => removeItem(idx)}>Remove</button>
+        {/* Basic Information */}
+        <div className="form-section">
+          <div className="form-section-header">
+            <span className="form-section-icon">📋</span>
+            <h3 className="form-section-title">Basic Information</h3>
+          </div>
+          
+          <div className="responsive-grid-sm">
+            <div className="form-group">
+              <label className="form-label">Company *</label>
+              <select 
+                className="form-input" 
+                value={companyId} 
+                onChange={e => setCompanyId(e.target.value)}
+                required
+              >
+                <option value="">Select company</option>
+                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
             </div>
-          ))}
-          <button type="button" onClick={addItem}>Add Item</button>
+            
+            <div className="form-group">
+              <label className="form-label">Project</label>
+              <select 
+                className="form-input" 
+                value={projectId} 
+                onChange={e => setProjectId(e.target.value)}
+              >
+                <option value="">(Optional) Select project</option>
+                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+              </select>
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Title *</label>
+              <input 
+                className="form-input" 
+                value={title} 
+                onChange={e => setTitle(e.target.value)} 
+                placeholder="Enter RFQ title"
+                required
+              />
+            </div>
+            
+            <div className="form-group">
+              <label className="form-label">Due Date</label>
+              <input 
+                type="date" 
+                className="form-input" 
+                value={dueDate} 
+                onChange={e => setDueDate(e.target.value)} 
+              />
+            </div>
+          </div>
+          
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea 
+              className="form-input" 
+              value={description} 
+              onChange={e => setDescription(e.target.value)} 
+              placeholder="Enter detailed description of requirements"
+              rows={4}
+              style={{ resize: 'vertical' }}
+            />
+          </div>
         </div>
-        <div style={{ marginTop: 12 }}>
-          <button type="submit" disabled={disabled}>Create RFQ</button>
+
+        {/* Items Section */}
+        <div className="form-section">
+          <div className="form-section-header">
+            <span className="form-section-icon">📦</span>
+            <h3 className="form-section-title">Items & Requirements</h3>
+          </div>
+          
+          <div className="table-container">
+            <div className="table-header">
+              <h4 className="table-title">RFQ Items</h4>
+              <p className="table-subtitle">Add items you need quotes for</p>
+            </div>
+            
+            <div className="p-4">
+              {items.map((item, idx) => (
+                <div key={idx} className="responsive-grid-sm mb-4 p-4" style={{ 
+                  border: '1px solid var(--gray-200)', 
+                  borderRadius: 'var(--radius-md)',
+                  backgroundColor: 'var(--gray-50)'
+                }}>
+                  <div className="form-group">
+                    <label className="form-label">Description</label>
+                    <input 
+                      className="form-input" 
+                      placeholder="Item description" 
+                      value={item.description} 
+                      onChange={e => updateItem(idx, 'description', e.target.value)} 
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Quantity</label>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      placeholder="Quantity" 
+                      value={item.quantity} 
+                      onChange={e => updateItem(idx, 'quantity', e.target.value)} 
+                      min="1"
+                    />
+                  </div>
+                  
+                  <div className="form-group">
+                    <label className="form-label">Target Rate (₹)</label>
+                    <input 
+                      type="number" 
+                      className="form-input" 
+                      placeholder="Expected rate" 
+                      value={item.target_rate} 
+                      onChange={e => updateItem(idx, 'target_rate', e.target.value)} 
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+                  
+                  <div className="form-group" style={{ display: 'flex', alignItems: 'end' }}>
+                    <button 
+                      type="button" 
+                      className="btn btn-danger"
+                      onClick={() => removeItem(idx)}
+                      disabled={items.length === 1}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ))}
+              
+              <div className="text-center">
+                <button 
+                  type="button" 
+                  className="btn btn-secondary"
+                  onClick={addItem}
+                >
+                  + Add Another Item
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Submit Section */}
+        <div className="form-section">
+          <div className="action-group">
+            <button 
+              type="submit" 
+              className="btn btn-primary btn-lg"
+              disabled={disabled || loading}
+            >
+              {loading ? 'Creating RFQ...' : 'Create RFQ'}
+            </button>
+            <button 
+              type="button" 
+              className="btn btn-secondary"
+              onClick={() => {
+                setTitle('')
+                setDescription('')
+                setDueDate('')
+                setItems([{ description: '', quantity: 1, target_rate: 0 }])
+                setError('')
+                setOk('')
+              }}
+            >
+              Reset Form
+            </button>
+          </div>
         </div>
       </form>
-    </div>
+    </PageLayout>
   )
 }
 

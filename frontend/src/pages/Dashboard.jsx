@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getDashboardData, getCompanies, getProjects, getVendors } from '../services/dashboardService'
 import StatusBadge from '../components/StatusBadge'
+import PageLayout from '../components/PageLayout'
 
 export default function Dashboard() {
   const [companies, setCompanies] = useState([])
@@ -60,145 +61,100 @@ export default function Dashboard() {
     loadDashboard()
   }, [companyId, projectId, vendorId])
 
-  if (loading) {
-    return (
-      <div className="page-container">
-        <div className="loading-overlay">
-          <div className="loading-spinner"></div>
-        </div>
-      </div>
-    )
-  }
-  
-  if (error) {
-    return (
-      <div className="page-container">
-        <div className="error-message">{error}</div>
-      </div>
-    )
-  }
-
   return (
-    <div className="page-container">
-      <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Overview of your vendor management system</p>
-      </div>
-      
+    <PageLayout
+      title="Dashboard"
+      subtitle="Overview of your vendor management system"
+      loading={loading}
+      error={error}
+    >
       {/* Filters */}
-      <div className="card" style={{ marginBottom: 'var(--space-8)' }}>
-        <div className="card-body">
-          <h3 style={{ margin: '0 0 var(--space-4) 0', fontSize: 'var(--font-size-lg)', color: 'var(--gray-700)' }}>
-            Filters
-          </h3>
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 'var(--space-6)'
-          }}>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Company</label>
-              <select 
-                className="form-input"
-                value={companyId} 
-                onChange={e => { setCompanyId(e.target.value); setProjectId(''); setVendorId('') }}
-              >
-                <option value="">All Companies</option>
-                {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-              </select>
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Project</label>
-              <select 
-                className="form-input"
-                value={projectId} 
-                onChange={e => setProjectId(e.target.value)}
-              >
-                <option value="">All Projects</option>
-                {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-              </select>
-            </div>
-            <div className="form-group" style={{ marginBottom: 0 }}>
-              <label className="form-label">Vendor</label>
-              <select 
-                className="form-input"
-                value={vendorId} 
-                onChange={e => setVendorId(e.target.value)}
-              >
-                <option value="">All Vendors</option>
-                {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
-              </select>
-            </div>
+      <div className="form-section">
+        <div className="form-section-header">
+          <span className="form-section-icon">🔍</span>
+          <h3 className="form-section-title">Filters</h3>
+        </div>
+        
+        <div className="responsive-grid-sm">
+          <div className="form-group">
+            <label className="form-label">Company</label>
+            <select 
+              className="form-input"
+              value={companyId} 
+              onChange={e => { setCompanyId(e.target.value); setProjectId(''); setVendorId('') }}
+            >
+              <option value="">All Companies</option>
+              {companies.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Project</label>
+            <select 
+              className="form-input"
+              value={projectId} 
+              onChange={e => setProjectId(e.target.value)}
+            >
+              <option value="">All Projects</option>
+              {projects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Vendor</label>
+            <select 
+              className="form-input"
+              value={vendorId} 
+              onChange={e => setVendorId(e.target.value)}
+            >
+              <option value="">All Vendors</option>
+              {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </select>
           </div>
         </div>
       </div>
 
-      {/* Dashboard Sections */}
-      <div style={{ 
-        display: 'grid', 
-        gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', 
-        gap: 'var(--space-6)',
-        marginBottom: 'var(--space-8)'
-      }}>
-        
+      {/* Dashboard Overview Cards */}
+      <div className="responsive-grid">
         {/* Pending Quotations */}
-        <div className="card">
-          <div className="card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <span style={{ fontSize: 'var(--font-size-lg)' }}>📋</span>
-              <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', color: 'var(--gray-700)' }}>
-                Pending Quotations
-              </h3>
-            </div>
+        <div className="form-section">
+          <div className="form-section-header">
+            <span className="form-section-icon">📋</span>
+            <h3 className="form-section-title">Pending Quotations</h3>
           </div>
-          <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto', padding: 0 }}>
+          
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {data.pendingQuotes.length === 0 ? (
-              <div style={{ 
-                padding: 'var(--space-8)', 
-                textAlign: 'center',
-                color: 'var(--gray-500)'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: 'var(--space-2)' }}>📝</div>
-                <p style={{ margin: 0, fontStyle: 'italic' }}>No pending quotations</p>
+              <div className="empty-state">
+                <div className="empty-state-icon">📝</div>
+                <div className="empty-state-title">No Pending Quotations</div>
+                <div className="empty-state-description">
+                  All quotations have been processed or no quotations are pending review.
+                </div>
               </div>
             ) : (
-              <div style={{ padding: 'var(--space-4)' }}>
+              <div className="responsive-grid-sm">
                 {data.pendingQuotes.map(quote => (
-                  <div key={quote.id} className="card" style={{ 
-                    marginBottom: 'var(--space-3)',
-                    border: '1px solid var(--gray-200)',
-                    backgroundColor: 'var(--gray-50)'
-                  }}>
-                    <div className="card-body" style={{ padding: 'var(--space-4)' }}>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-sm)', 
-                        fontWeight: '600', 
-                        marginBottom: 'var(--space-2)',
-                        color: 'var(--gray-800)'
-                      }}>
-                        {quote.title}
+                  <div key={quote.id} className="info-card">
+                    <div className="info-card-header">
+                      <span className="info-card-icon">📋</span>
+                      <div>
+                        <h4 className="info-card-title">{quote.title}</h4>
+                        <p className="info-card-subtitle">
+                          ID: {quote.id.slice(0, 8)} | Project: {quote.project_id ? quote.project_id.slice(0, 8) : 'N/A'}
+                        </p>
                       </div>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-xs)', 
-                        color: 'var(--gray-500)', 
-                        marginBottom: 'var(--space-3)',
-                        fontFamily: 'monospace'
-                      }}>
-                        ID: {quote.id.slice(0, 8)} | Project: {quote.project_id ? quote.project_id.slice(0, 8) : 'N/A'}
-                      </div>
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center' 
-                      }}>
-                        <StatusBadge status={quote.status} type="quote" />
-                        <Link 
-                          to={`/rfqs/${quote.id}`}
-                          className="btn btn-sm btn-primary"
-                        >
-                          View →
-                        </Link>
-                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <StatusBadge status={quote.status} type="quote" />
+                    </div>
+                    
+                    <div className="action-group">
+                      <Link 
+                        to={`/rfqs/${quote.id}`}
+                        className="btn btn-sm btn-primary"
+                      >
+                        View Details →
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -208,71 +164,53 @@ export default function Dashboard() {
         </div>
 
         {/* Approved POs */}
-        <div className="card">
-          <div className="card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <span style={{ fontSize: 'var(--font-size-lg)' }}>✅</span>
-              <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', color: 'var(--gray-700)' }}>
-                Approved POs
-              </h3>
-            </div>
+        <div className="form-section">
+          <div className="form-section-header">
+            <span className="form-section-icon">✅</span>
+            <h3 className="form-section-title">Approved Purchase Orders</h3>
           </div>
-          <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto', padding: 0 }}>
+          
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {data.approvedPOs.length === 0 ? (
-              <div style={{ 
-                padding: 'var(--space-8)', 
-                textAlign: 'center',
-                color: 'var(--gray-500)'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: 'var(--space-2)' }}>📄</div>
-                <p style={{ margin: 0, fontStyle: 'italic' }}>No approved POs</p>
+              <div className="empty-state">
+                <div className="empty-state-icon">📄</div>
+                <div className="empty-state-title">No Approved POs</div>
+                <div className="empty-state-description">
+                  No purchase orders have been approved yet.
+                </div>
               </div>
             ) : (
-              <div style={{ padding: 'var(--space-4)' }}>
+              <div className="responsive-grid-sm">
                 {data.approvedPOs.map(po => (
-                  <div key={po.id} className="card" style={{ 
-                    marginBottom: 'var(--space-3)',
-                    border: '1px solid var(--gray-200)',
-                    backgroundColor: 'var(--gray-50)'
-                  }}>
-                    <div className="card-body" style={{ padding: 'var(--space-4)' }}>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-sm)', 
-                        fontWeight: '600', 
-                        marginBottom: 'var(--space-2)',
-                        color: 'var(--gray-800)'
-                      }}>
-                        {po.po_number}
+                  <div key={po.id} className="info-card">
+                    <div className="info-card-header">
+                      <span className="info-card-icon">📄</span>
+                      <div>
+                        <h4 className="info-card-title">{po.po_number}</h4>
+                        <p className="info-card-subtitle">
+                          ID: {po.id.slice(0, 8)} | Project: {po.project_id ? po.project_id.slice(0, 8) : 'N/A'}
+                        </p>
                       </div>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-xs)', 
-                        color: 'var(--gray-500)', 
-                        marginBottom: 'var(--space-2)',
-                        fontFamily: 'monospace'
-                      }}>
-                        ID: {po.id.slice(0, 8)} | Project: {po.project_id ? po.project_id.slice(0, 8) : 'N/A'}
+                    </div>
+                    
+                    <div className="mb-2">
+                      <div className="text-sm text-muted">Total Amount</div>
+                      <div className="text-lg font-weight-semibold text-primary">
+                        ₹{parseFloat(po.total || 0).toLocaleString()}
                       </div>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-xs)', 
-                        color: 'var(--gray-600)', 
-                        marginBottom: 'var(--space-3)',
-                        fontWeight: '500'
-                      }}>
-                        Total: ₹{po.total}
-                      </div>
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center' 
-                      }}>
-                        <StatusBadge status={po.status} type="po" />
-                        <Link 
-                          to={`/pos/${po.id}`}
-                          className="btn btn-sm btn-primary"
-                        >
-                          View →
-                        </Link>
-                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <StatusBadge status={po.status} type="po" />
+                    </div>
+                    
+                    <div className="action-group">
+                      <Link 
+                        to={`/pos/${po.id}`}
+                        className="btn btn-sm btn-primary"
+                      >
+                        View Details →
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -282,71 +220,55 @@ export default function Dashboard() {
         </div>
 
         {/* Invoices to Approve */}
-        <div className="card">
-          <div className="card-header">
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <span style={{ fontSize: 'var(--font-size-lg)' }}>💰</span>
-              <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', color: 'var(--gray-700)' }}>
-                Invoices to Approve
-              </h3>
-            </div>
+        <div className="form-section">
+          <div className="form-section-header">
+            <span className="form-section-icon">💰</span>
+            <h3 className="form-section-title">Invoices to Approve</h3>
           </div>
-          <div className="card-body" style={{ maxHeight: '400px', overflowY: 'auto', padding: 0 }}>
+          
+          <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {data.invoicesToApprove.length === 0 ? (
-              <div style={{ 
-                padding: 'var(--space-8)', 
-                textAlign: 'center',
-                color: 'var(--gray-500)'
-              }}>
-                <div style={{ fontSize: '2rem', marginBottom: 'var(--space-2)' }}>📊</div>
-                <p style={{ margin: 0, fontStyle: 'italic' }}>No invoices to approve</p>
+              <div className="empty-state">
+                <div className="empty-state-icon">📊</div>
+                <div className="empty-state-title">No Invoices to Approve</div>
+                <div className="empty-state-description">
+                  All invoices have been processed or no invoices are pending approval.
+                </div>
               </div>
             ) : (
-              <div style={{ padding: 'var(--space-4)' }}>
+              <div className="responsive-grid-sm">
                 {data.invoicesToApprove.map(invoice => (
-                  <div key={invoice.id} className="card" style={{ 
-                    marginBottom: 'var(--space-3)',
-                    border: '1px solid var(--gray-200)',
-                    backgroundColor: 'var(--gray-50)'
-                  }}>
-                    <div className="card-body" style={{ padding: 'var(--space-4)' }}>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-sm)', 
-                        fontWeight: '600', 
-                        marginBottom: 'var(--space-2)',
-                        color: 'var(--gray-800)'
-                      }}>
-                        {invoice.invoice_number || `INV-${invoice.id.slice(0, 8)}`}
+                  <div key={invoice.id} className="info-card">
+                    <div className="info-card-header">
+                      <span className="info-card-icon">💰</span>
+                      <div>
+                        <h4 className="info-card-title">
+                          {invoice.invoice_number || `INV-${invoice.id.slice(0, 8)}`}
+                        </h4>
+                        <p className="info-card-subtitle">
+                          ID: {invoice.id.slice(0, 8)} | PO: {invoice.po_id ? invoice.po_id.slice(0, 8) : 'N/A'}
+                        </p>
                       </div>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-xs)', 
-                        color: 'var(--gray-500)', 
-                        marginBottom: 'var(--space-2)',
-                        fontFamily: 'monospace'
-                      }}>
-                        ID: {invoice.id.slice(0, 8)} | PO: {invoice.po_id ? invoice.po_id.slice(0, 8) : 'N/A'}
+                    </div>
+                    
+                    <div className="mb-2">
+                      <div className="text-sm text-muted">Total Amount</div>
+                      <div className="text-lg font-weight-semibold text-primary">
+                        ₹{parseFloat(invoice.total || 0).toLocaleString()}
                       </div>
-                      <div style={{ 
-                        fontSize: 'var(--font-size-xs)', 
-                        color: 'var(--gray-600)', 
-                        marginBottom: 'var(--space-3)',
-                        fontWeight: '500'
-                      }}>
-                        Total: ₹{invoice.total}
-                      </div>
-                      <div style={{ 
-                        display: 'flex', 
-                        justifyContent: 'space-between', 
-                        alignItems: 'center' 
-                      }}>
-                        <StatusBadge status={invoice.status} type="invoice" />
-                        <Link 
-                          to={`/invoices/${invoice.id}`}
-                          className="btn btn-sm btn-primary"
-                        >
-                          View →
-                        </Link>
-                      </div>
+                    </div>
+                    
+                    <div className="mb-4">
+                      <StatusBadge status={invoice.status} type="invoice" />
+                    </div>
+                    
+                    <div className="action-group">
+                      <Link 
+                        to={`/invoices/${invoice.id}`}
+                        className="btn btn-sm btn-primary"
+                      >
+                        View Details →
+                      </Link>
                     </div>
                   </div>
                 ))}
@@ -357,66 +279,113 @@ export default function Dashboard() {
       </div>
 
       {/* Quick Actions */}
-      <div className="card">
-        <div className="card-header">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-            <span style={{ fontSize: 'var(--font-size-lg)' }}>⚡</span>
-            <h3 style={{ margin: 0, fontSize: 'var(--font-size-lg)', color: 'var(--gray-700)' }}>
-              Quick Actions
-            </h3>
-          </div>
+      <div className="form-section">
+        <div className="form-section-header">
+          <span className="form-section-icon">⚡</span>
+          <h3 className="form-section-title">Quick Actions</h3>
         </div>
-        <div className="card-body">
-          <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-            gap: 'var(--space-4)'
-          }}>
-            <Link 
-              to="/rfqs/compose"
-              className="btn btn-primary"
-              style={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--space-2)',
-                textDecoration: 'none'
-              }}
-            >
-              <span>📋</span>
-              Create RFQ
-            </Link>
-            <Link 
-              to="/pos/create"
-              className="btn btn-success"
-              style={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--space-2)',
-                textDecoration: 'none'
-              }}
-            >
-              <span>📄</span>
-              Create PO
-            </Link>
-            <Link 
-              to="/invoices"
-              className="btn btn-secondary"
-              style={{ 
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 'var(--space-2)',
-                textDecoration: 'none'
-              }}
-            >
-              <span>💰</span>
-              View All Invoices
-            </Link>
-          </div>
+        
+        <div className="responsive-grid-sm">
+          <Link 
+            to="/rfqs/compose"
+            className="info-card"
+            style={{ 
+              textDecoration: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              padding: 'var(--space-6)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)'
+              e.target.style.boxShadow = 'var(--shadow-lg)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)'
+              e.target.style.boxShadow = 'var(--shadow-sm)'
+            }}
+          >
+            <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
+              <span className="info-card-icon" style={{ fontSize: '2rem' }}>📋</span>
+              <div>
+                <h4 className="info-card-title">Create RFQ</h4>
+                <p className="info-card-subtitle">Request quotes from vendors</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              Start a new request for quotation to get competitive pricing
+            </div>
+          </Link>
+
+          <Link 
+            to="/pos/create"
+            className="info-card"
+            style={{ 
+              textDecoration: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              padding: 'var(--space-6)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)'
+              e.target.style.boxShadow = 'var(--shadow-lg)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)'
+              e.target.style.boxShadow = 'var(--shadow-sm)'
+            }}
+          >
+            <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
+              <span className="info-card-icon" style={{ fontSize: '2rem' }}>📄</span>
+              <div>
+                <h4 className="info-card-title">Create PO</h4>
+                <p className="info-card-subtitle">Create purchase order from quote</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              Convert approved vendor quotes into purchase orders
+            </div>
+          </Link>
+
+          <Link 
+            to="/invoices"
+            className="info-card"
+            style={{ 
+              textDecoration: 'none',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
+              padding: 'var(--space-6)',
+              transition: 'all 0.2s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.target.style.transform = 'translateY(-2px)'
+              e.target.style.boxShadow = 'var(--shadow-lg)'
+            }}
+            onMouseLeave={(e) => {
+              e.target.style.transform = 'translateY(0)'
+              e.target.style.boxShadow = 'var(--shadow-sm)'
+            }}
+          >
+            <div className="info-card-header" style={{ marginBottom: 'var(--space-4)' }}>
+              <span className="info-card-icon" style={{ fontSize: '2rem' }}>💰</span>
+              <div>
+                <h4 className="info-card-title">View Invoices</h4>
+                <p className="info-card-subtitle">Manage all invoices</p>
+              </div>
+            </div>
+            <div className="text-sm text-muted">
+              Review, approve, and track all invoice payments
+            </div>
+          </Link>
         </div>
       </div>
-    </div>
+    </PageLayout>
   )
 }

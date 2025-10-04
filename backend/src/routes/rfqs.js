@@ -1,6 +1,6 @@
 import { Router } from 'express'
 import { pool } from '../db.js'
-import { enforceCompanyScope } from '../middleware/auth.js'
+import { enforceCompanyScope, requireRole } from '../middleware/auth.js'
 import { asyncHandler, ValidationError, handleDatabaseError } from '../utils/errorHandler.js'
 
 const router = Router()
@@ -45,7 +45,8 @@ router.get('/', enforceCompanyScope, asyncHandler(async (req, res) => {
 }))
 
 // Create RFQ with items
-router.post('/', enforceCompanyScope, asyncHandler(async (req, res) => {
+// Only Super Admin, Company Admin, and Project Manager can create RFQs
+router.post('/', enforceCompanyScope, requireRole(['super_admin', 'company_admin', 'project_manager']), asyncHandler(async (req, res) => {
   const client = await pool.connect()
   try {
     const { company_id, project_id, title, description, due_date, items } = req.body || {}
@@ -158,7 +159,8 @@ router.post('/:id/negotiations', enforceCompanyScope, async (req, res) => {
 })
 
 // Approve a vendor quote -> create Purchase Order
-router.post('/:id/approve', enforceCompanyScope, asyncHandler(async (req, res) => {
+// Only Super Admin, Company Admin, and Project Manager can approve RFQs
+router.post('/:id/approve', enforceCompanyScope, requireRole(['super_admin', 'company_admin', 'project_manager']), asyncHandler(async (req, res) => {
   const rfqId = req.params.id
   const { vendor_quote_id } = req.body || {}
   
@@ -174,6 +176,17 @@ router.post('/:id/approve', enforceCompanyScope, asyncHandler(async (req, res) =
     const rfq = await client.query('select * from quotation_requests where id = $1', [rfqId])
     if (rfq.rows.length === 0) {
       throw new ValidationError('RFQ not found', 'rfq_id', rfqId)
+    }
+    
+    // Check if RFQ is already closed or has a PO
+    if (rfq.rows[0].status === 'closed') {
+      throw new ValidationError('RFQ is already closed and cannot be approved again', 'rfq_status', rfq.rows[0].status)
+    }
+    
+    // Check if a PO already exists for this RFQ
+    const existingPO = await client.query('select * from purchase_orders where rfq_id = $1', [rfqId])
+    if (existingPO.rows.length > 0) {
+      throw new ValidationError('A Purchase Order already exists for this RFQ', 'rfq_id', rfqId)
     }
     
     // Get vendor quote details
@@ -200,7 +213,15 @@ router.post('/:id/approve', enforceCompanyScope, asyncHandler(async (req, res) =
       await client.query(
         `insert into po_items (po_id, item_id, description, hsn_sac_code, gst_rate, quantity, unit_rate, line_subtotal, tax_cgst, tax_sgst, tax_igst, line_total)
          values ($1, null, $2, $3, coalesce($4,0.00), coalesce($5,1), coalesce($6,0.00), $7, 0.00, 0.00, 0.00, $7)`,
-        [poId, it.description || null, it.hsn_sac_code || null, it.gst_rate ?? null, it.quantity ?? null, it.unit_rate ?? null, it.line_total]
+        [
+          poId, 
+          it.description || null, 
+          it.hsn_sac_code || null, 
+          parseFloat(it.gst_rate) || 0.00, 
+          parseFloat(it.quantity) || 1, 
+          parseFloat(it.unit_rate) || 0.00, 
+          parseFloat(it.line_total) || 0.00
+        ]
       )
     }
 

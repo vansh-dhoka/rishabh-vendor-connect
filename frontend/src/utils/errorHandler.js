@@ -140,41 +140,13 @@ export function logError(error, context = {}) {
 }
 
 /**
- * Error boundary helper
+ * Error boundary helper (use ErrorBoundary component from components/ErrorBoundary.jsx)
+ * This is a placeholder - use the actual React ErrorBoundary component for JSX
  */
 export function createErrorBoundary(Component, fallback = null) {
-  return class ErrorBoundary extends React.Component {
-    constructor(props) {
-      super(props)
-      this.state = { hasError: false, error: null }
-    }
-    
-    static getDerivedStateFromError(error) {
-      return { hasError: true, error }
-    }
-    
-    componentDidCatch(error, errorInfo) {
-      logError(error, { component: Component.name, errorInfo })
-    }
-    
-    render() {
-      if (this.state.hasError) {
-        return fallback || (
-          <div className="error-boundary">
-            <div className="error-message">
-              <h3>Something went wrong</h3>
-              <p>We're sorry, but something unexpected happened.</p>
-              <button onClick={() => window.location.reload()}>
-                Reload Page
-              </button>
-            </div>
-          </div>
-        )
-      }
-      
-      return this.props.children
-    }
-  }
+  // This function is deprecated - use ErrorBoundary component instead
+  console.warn('createErrorBoundary is deprecated. Use ErrorBoundary component from components/ErrorBoundary.jsx')
+  return null
 }
 
 /**
